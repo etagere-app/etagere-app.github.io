@@ -65,6 +65,9 @@ export const T = {
     notifsRefusees: 'Notifications bloquées : autorise-les dans les réglages du téléphone.',
   },
   aJour: 'Bibliothèque à jour.',
+  // 04/11 : sortes de romans proposées sur l'étagère Livres (et données à l'automate pour classer les séries « livre »)
+  genresRoman: ['Light novel', 'Web novel', 'Fantasy', 'Science-fiction', 'Policier', 'Thriller', 'Romance', 'Horreur', 'Fantastique', 'Historique', 'Aventure', 'Humour', 'Jeunesse', 'Young adult', 'Contemporain', 'Classique', 'Nouvelles', 'Tiré d’un manga', 'Tiré d’un jeu vidéo', 'Essai', 'Biographie'],
+  toutesSortesRoman: 'Toutes les sortes de romans',
   autreAppareil: 'Voir sur un autre appareil (PC…)',
   aideAutreAppareil: 'Envoie-toi ce lien (message, mail) et ouvre-le sur ton PC : ta bibliothèque s’y affiche, en consultation. Le lien contient ta bibliothèque : ne le partage qu’avec toi-même.',
   lienCopie: 'Lien copié : colle-le dans un message pour toi, puis ouvre-le sur ton PC.',

@@ -40,15 +40,25 @@ export async function vueBibliotheque() {
   if (filtre === 'envie' && !envies.length) filtre = 'tout';
   const puces = el('div.filtres', { role: 'group', 'aria-label': 'Filtrer par type' }, ...types.map((ty) => el('button.puce', {
     'aria-pressed': String(ty === filtre), texte: ty === 'tout' ? `${T.tout} · ${series.length}` : ty === 'envie' ? `${T.aAcheter} · ${envies.length}` : T.types[ty] || ty,
-    onclick: (e) => { filtre = ty; puces.querySelectorAll('.puce').forEach((p) => p.setAttribute('aria-pressed', String(p === e.currentTarget))); dessiner(); },
+    onclick: (e) => { filtre = ty; puces.querySelectorAll('.puce').forEach((p) => p.setAttribute('aria-pressed', String(p === e.currentTarget))); remplirCats?.(); dessiner(); },
   })));
   const recherche = el('div.recherche', {}, el('label.sr', { for: 'cherche', texte: T.rechercher }),
     el('input', { id: 'cherche', type: 'search', placeholder: T.rechercher, value: texte, oninput: (e) => { texte = e.target.value; dessiner(); } }));
   const toutesCats = [...new Set(toutes.flatMap(categoriesDe))].sort((a, b) => a.localeCompare(b, 'fr'));
-  if (categorie && !toutesCats.includes(categorie)) categorie = '';
-  const choixCat = toutesCats.length ? el('label.categorie', {}, el('span.sr', { texte: T.categorie }), el('select', {
-    onchange: (e) => { categorie = e.target.value; dessiner(); },
-  }, el('option', { value: '', texte: T.toutes }), ...toutesCats.map((c) => el('option', { value: c, selected: c === categorie, texte: c })))) : '';
+  if (categorie && !toutesCats.includes(categorie) && !T.genresRoman.includes(categorie)) categorie = '';
+  // 04/11 : sur l'étagère Livres, toutes les sortes de romans (light novel, policier…), même celles encore vides
+  const select = el('select', { onchange: (e) => { categorie = e.target.value; dessiner(); } });
+  const remplirCats = () => {
+    const livres = filtre === 'livre';
+    const dans = (filtre === 'tout' || filtre === 'envie' ? toutes : toutes.filter((s) => s.type === filtre));
+    const cats = livres ? [...new Set([...T.genresRoman, ...dans.flatMap(categoriesDe)])] : [...new Set(dans.flatMap(categoriesDe))].sort((a, b) => a.localeCompare(b, 'fr'));
+    if (categorie && !cats.includes(categorie)) categorie = '';
+    const nb = (c) => dans.filter((s) => categoriesDe(s).includes(c)).length;
+    select.replaceChildren(el('option', { value: '', texte: livres ? T.toutesSortesRoman : T.toutes }),
+      ...cats.map((c) => el('option', { value: c, selected: c === categorie, texte: nb(c) ? `${c} · ${nb(c)}` : c })));
+  };
+  remplirCats();
+  const choixCat = toutesCats.length || series.some((s) => s.type === 'livre') ? el('label.categorie', {}, el('span.sr', { texte: T.categorie }), select) : '';
   dessiner();
   const possedes = series.reduce((n, s) => n + s.nb_possedes, 0);
   const nonLus = series.reduce((n, s) => n + (s.nb_non_lus || 0), 0);
