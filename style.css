@@ -1,0 +1,243 @@
+/* Étagère — « tranches de livres » : fond d'encre chaude, papier, une teinte par série (--teinte, posée en JS). */
+:root {
+  --encre: #15110e;
+  --encre-2: #1f1915;
+  --encre-3: #2b231d;
+  --papier: #f1e7d6;
+  --papier-2: #c9bba5;
+  --papier-3: #8d7f6c;
+  --or: #e0a84f;
+  --rouge: #e06a4f;
+  --vert: #7fb48a;
+  --rayon: 14px;
+  --serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--encre); color: var(--papier); font: 16px/1.45 var(--sans); }
+body { min-height: 100dvh; padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+body::before { /* grain de papier très léger */
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: .5;
+  background: radial-gradient(1200px 600px at 80% -10%, #3a2a1c55, transparent 60%), radial-gradient(900px 500px at -10% 110%, #2a1c3355, transparent 60%);
+}
+main, header, nav { position: relative; z-index: 1; }
+a { color: var(--or); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--or); outline-offset: 2px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+[hidden] { display: none !important; }
+
+/* En-tête */
+.entete { padding: 18px 16px 8px; max-width: 1100px; margin: 0 auto; }
+.marque { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.marque h1 { font: 600 2rem/1 var(--serif); letter-spacing: .01em; margin: 0; }
+.marque h1 span { color: var(--or); }
+.compte { font-size: .9rem; color: var(--papier-2); }
+.menu-bouton { background: none; border: 1px solid var(--encre-3); border-radius: 999px; width: 40px; height: 40px; color: var(--papier-2); cursor: pointer; }
+.recherche { margin-top: 14px; display: flex; gap: 8px; }
+.recherche input { flex: 1; min-width: 0; background: var(--encre-2); border: 1px solid var(--encre-3); border-radius: 999px; padding: 11px 16px; }
+.filtres { display: flex; gap: 8px; margin-top: 12px; overflow-x: auto; scrollbar-width: none; }
+.puce { flex: none; border: 1px solid var(--encre-3); background: transparent; border-radius: 999px; padding: 6px 14px; color: var(--papier-2); cursor: pointer; }
+.puce[aria-pressed="true"] { background: var(--papier); color: var(--encre); border-color: var(--papier); }
+
+main { max-width: 1100px; margin: 0 auto; padding: 8px 16px 24px; }
+h2 { font: 600 1.35rem/1.2 var(--serif); margin: 18px 0 10px; }
+.vide { text-align: center; color: var(--papier-2); padding: 48px 12px; }
+.vide strong { display: block; font: 600 1.3rem var(--serif); color: var(--papier); margin-bottom: 6px; }
+
+/* Mur de couvertures */
+.mur { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 18px 14px; list-style: none; margin: 8px 0 0; padding: 0; }
+.livre { --teinte: 30; display: block; text-decoration: none; color: inherit; }
+.couv {
+  position: relative; aspect-ratio: 2 / 3; border-radius: 4px 10px 10px 4px; overflow: hidden;
+  background: linear-gradient(160deg, hsl(var(--teinte) 45% 34%), hsl(var(--teinte) 50% 16%));
+  box-shadow: 0 10px 24px #0008, inset 6px 0 0 #0000003a, inset 8px 0 0 #ffffff12;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.livre:hover .couv, .livre:focus-visible .couv { transform: translateY(-4px) rotate(-.6deg); box-shadow: 0 16px 30px #000a, inset 6px 0 0 #0000003a; }
+.couv img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.couv .titre-couv { position: absolute; inset: 38px 12px 44px 18px; border-top: 1px solid hsl(var(--teinte) 60% 80% / .35); padding-top: 10px; font: 600 1.05rem/1.15 var(--serif); color: hsl(var(--teinte) 60% 92%); overflow: hidden; }
+.couv .type { position: absolute; top: 8px; right: 8px; font-size: .65rem; letter-spacing: .12em; text-transform: uppercase; background: #000a; padding: 2px 7px; border-radius: 999px; }
+.couv .compteur { position: absolute; left: 0; right: 0; bottom: 0; padding: 18px 10px 8px; background: linear-gradient(transparent, #000c); font-size: .85rem; display: flex; justify-content: space-between; align-items: end; }
+.compteur b { font: 700 1.05rem var(--serif); }
+.livre .nom { margin: 8px 2px 0; font-size: .9rem; line-height: 1.25; color: var(--papier-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.pastille-sortie { color: var(--or); font-size: .75rem; }
+
+/* Fiche série */
+.fiche { --teinte: 30; display: grid; grid-template-columns: 120px 1fr; gap: 16px; align-items: end; margin-top: 8px; }
+.fiche .couv { width: 120px; }
+.fiche h2 { font-size: 1.7rem; margin: 0 0 6px; }
+.meta { color: var(--papier-2); font-size: .92rem; }
+.stats { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 10px; }
+.stats div { font-size: .8rem; color: var(--papier-3); text-transform: uppercase; letter-spacing: .08em; }
+.stats b { display: block; font: 700 1.5rem var(--serif); color: var(--papier); letter-spacing: 0; text-transform: none; }
+.retour { display: inline-flex; gap: 6px; align-items: center; color: var(--papier-2); text-decoration: none; margin: 4px 0 6px; }
+.legende { display: flex; gap: 14px; flex-wrap: wrap; font-size: .82rem; color: var(--papier-2); margin: 18px 0 8px; }
+.legende span::before { content: ""; display: inline-block; width: 12px; height: 16px; border-radius: 2px; margin-right: 6px; vertical-align: -3px; }
+.legende .l-possede::before { background: hsl(var(--teinte, 30) 60% 55%); }
+.legende .l-manque::before { border: 1.5px dashed var(--papier-3); }
+.legende .l-avenir::before { border: 1.5px solid var(--or); }
+
+/* Grille des n° : chaque tome est une tranche */
+.tomes { --teinte: 30; display: grid; grid-template-columns: repeat(auto-fill, minmax(54px, 1fr)); gap: 8px; list-style: none; padding: 0; margin: 0; }
+.tome {
+  position: relative; width: 100%; aspect-ratio: 1 / 1.45; border-radius: 3px 6px 6px 3px; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  font: 700 1.15rem var(--serif); border: 1.5px dashed var(--papier-3); background: transparent; color: var(--papier-3);
+  transition: transform .12s ease, background .2s ease;
+}
+.tome:active { transform: scale(.94); }
+.tome.possede { border: 0; color: hsl(var(--teinte) 60% 95%); background: linear-gradient(180deg, hsl(var(--teinte) 55% 52%), hsl(var(--teinte) 55% 36%)); box-shadow: inset 4px 0 0 #00000030, 0 3px 8px #0006; }
+.tome.avenir { border: 1.5px solid var(--or); color: var(--or); border-style: solid; }
+/* Pile de la honte : marque-page doré qui dépasse en haut du tome pas encore lu */
+.tome.non-lu::after { content: ''; position: absolute; top: -3px; right: 8px; width: 9px; height: 18px; background: var(--or);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 72%, 0 100%); box-shadow: 0 2px 4px #0008; z-index: 2; }
+.legende .l-non-lu::before { box-shadow: inset -4px 0 0 var(--or); background-color: hsl(var(--teinte, 30) 60% 55%); }
+.stat-pile { text-decoration: none; color: var(--or) !important; }
+.stat-pile b { color: var(--or) !important; }
+.pile-serie { margin: 22px 0; }
+.pile-tete { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.pile-tete h3 { font: 600 1.15rem var(--serif); margin: 0; }
+.pile-tete h3 a { color: var(--papier); text-decoration: none; }
+.pile-tete h3 span { color: var(--papier-3); font: 500 .9rem var(--sans); }
+.pile-tete .bouton { padding: 7px 14px; font-size: .85rem; }
+.tome small { font: 500 .62rem var(--sans); letter-spacing: .02em; }
+.tome.vient { animation: pose .35s ease; }
+@keyframes pose { from { transform: translateY(-10px) scale(1.08); } to { transform: none; } }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 22px; }
+
+/* Boutons, formulaires */
+.bouton { border: 0; border-radius: 999px; padding: 11px 20px; background: var(--papier); color: var(--encre); font-weight: 650; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
+.bouton.discret { background: var(--encre-2); color: var(--papier); border: 1px solid var(--encre-3); }
+.bouton.danger { background: transparent; color: var(--rouge); border: 1px solid #e06a4f66; }
+.bouton.or { background: var(--or); color: var(--encre); }
+.champ { display: grid; gap: 6px; margin: 12px 0; }
+.champ span { font-size: .85rem; color: var(--papier-2); }
+.champ input, .champ select, .champ textarea { background: var(--encre-2); border: 1px solid var(--encre-3); border-radius: 10px; padding: 11px 12px; width: 100%; }
+.champ textarea { min-height: 180px; font-family: ui-monospace, Consolas, monospace; font-size: .9rem; }
+.aide { color: var(--papier-3); font-size: .85rem; }
+.carte { background: var(--encre-2); border: 1px solid var(--encre-3); border-radius: var(--rayon); padding: 16px; margin: 12px 0; }
+.onglets { display: flex; gap: 6px; background: var(--encre-2); border-radius: 999px; padding: 4px; margin: 10px 0; }
+.onglets button { flex: 1; border: 0; background: transparent; border-radius: 999px; padding: 8px; color: var(--papier-2); cursor: pointer; }
+.onglets button[aria-selected="true"] { background: var(--papier); color: var(--encre); }
+
+/* À venir */
+.mois { font: 600 1rem var(--serif); color: var(--or); text-transform: capitalize; margin: 22px 0 8px; }
+.sortie { --teinte: 30; display: grid; grid-template-columns: 54px 1fr auto; gap: 12px; align-items: center; padding: 10px; border-radius: 12px; background: var(--encre-2); margin-bottom: 8px; text-decoration: none; color: inherit; border-left: 4px solid hsl(var(--teinte) 55% 50%); }
+.sortie .jour { text-align: center; font: 700 1.4rem/1 var(--serif); }
+.sortie .jour small { display: block; font: 500 .7rem var(--sans); color: var(--papier-3); text-transform: uppercase; }
+.sortie .n { font: 700 1.1rem var(--serif); color: var(--or); }
+.a-confirmer { font-size: .75rem; color: var(--papier-3); }
+
+/* Barre du bas + bouton Scanner */
+.barre { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; display: grid; grid-template-columns: 1fr 1fr 96px 1fr 1fr; align-items: end;
+  padding: 8px 8px calc(8px + env(safe-area-inset-bottom)); background: linear-gradient(transparent, var(--encre) 30%); }
+.barre a { text-align: center; text-decoration: none; color: var(--papier-3); font-size: .72rem; padding: 6px 0; display: grid; justify-items: center; gap: 2px; }
+.barre a svg { width: 24px; height: 24px; }
+.barre a[aria-current="page"] { color: var(--papier); }
+.scanner-bouton { justify-self: center; width: 68px; height: 68px; border-radius: 50%; border: 0; background: var(--or); color: var(--encre); cursor: pointer;
+  box-shadow: 0 8px 22px #e0a84f55, 0 0 0 6px var(--encre); display: grid; place-items: center; margin-bottom: 6px; }
+.scanner-bouton svg { width: 30px; height: 30px; }
+
+/* Scanner plein écran */
+.scan { position: fixed; inset: 0; z-index: 20; background: #000; display: grid; grid-template-rows: 1fr auto; }
+.scan > div:first-child { position: relative; overflow: hidden; } /* l'ombre du viseur reste au-dessus de la vidéo, pas du panneau */
+.scan video { width: 100%; height: 100%; object-fit: cover; }
+.viseur { position: absolute; left: 10%; right: 10%; top: 32%; height: 22%; border: 2px solid var(--or); border-radius: 16px; box-shadow: 0 0 0 100vmax #0009; }
+.viseur::after { content: ""; position: absolute; left: 8px; right: 8px; top: 50%; height: 2px; background: var(--rouge); animation: balaye 1.6s ease-in-out infinite alternate; }
+@keyframes balaye { from { transform: translateY(-30px); } to { transform: translateY(30px); } }
+.scan-panneau select, .scan-panneau > form > input { width: 100%; background: var(--encre-2); border: 1px solid var(--encre-3); border-radius: 10px; padding: 11px 12px; margin-bottom: 8px; }
+.scan-panneau { position: relative; z-index: 3; background: var(--encre); padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); border-radius: 20px 20px 0 0; }
+.scan-fermer svg { width: 22px; height: 22px; }
+.scan-fermer { padding: 10px; position: absolute; top: calc(12px + env(safe-area-inset-top)); right: 12px; z-index: 2; }
+
+/* Menu, bandeau, message */
+.feuille { position: fixed; inset: auto 0 0 0; z-index: 30; background: var(--encre-2); border-radius: 20px 20px 0 0; padding: 18px 16px calc(18px + env(safe-area-inset-bottom)); box-shadow: 0 -10px 40px #000a; }
+.feuille .bouton { width: 100%; justify-content: center; margin: 6px 0; }
+.voile { position: fixed; inset: 0; z-index: 25; background: #0008; }
+.bandeau { position: fixed; left: 12px; right: 12px; bottom: calc(96px + env(safe-area-inset-bottom)); z-index: 15; background: var(--encre-3); border-radius: var(--rayon); padding: 14px; font-size: .9rem; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; max-width: 640px; margin: 0 auto; }
+.message { position: fixed; left: 50%; top: calc(14px + env(safe-area-inset-top)); transform: translateX(-50%); z-index: 40; background: var(--papier); color: var(--encre); padding: 10px 18px; border-radius: 999px; font-weight: 600; box-shadow: 0 8px 24px #000a; }
+
+/* Connexion */
+.connexion { min-height: 100dvh; display: grid; place-items: center; padding: 24px 16px; }
+.connexion form { width: 100%; max-width: 360px; }
+.connexion h1 { font: 600 3rem/1 var(--serif); margin: 0 0 6px; }
+.connexion h1 span { color: var(--or); }
+.erreur { color: var(--rouge); min-height: 1.4em; }
+
+/* Pages légales */
+.legal { max-width: 760px; margin: 0 auto; padding: 24px 16px 64px; }
+.legal h1 { font: 600 2rem var(--serif); }
+.legal h2 { margin-top: 28px; }
+.legal p, .legal li { color: var(--papier-2); }
+.pied { text-align: center; font-size: .8rem; color: var(--papier-3); margin: 32px 0 8px; }
+.pied a { color: var(--papier-3); }
+
+@media (min-width: 760px) {
+  .mur { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 26px 20px; }
+  .fiche { grid-template-columns: 160px 1fr; }
+  .fiche .couv { width: 160px; }
+  .tomes { grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); }
+  .barre { max-width: 560px; margin: 0 auto; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* Fiche d'un tome, résumé, choix du mode */
+.modes { max-width: 360px; margin-top: 18px; }
+.modes + .legende { margin-top: 10px; }
+details.resume { margin-top: 14px; color: var(--papier-2); }
+details.resume summary { cursor: pointer; color: var(--or); }
+details.resume p { white-space: pre-line; }
+.tome-fiche { max-height: 86dvh; overflow-y: auto; }
+.tome-tete { display: flex; gap: 14px; align-items: end; }
+.tome-tete h3 { font: 600 1.6rem var(--serif); margin: 0; }
+.tome-couv { width: 90px; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 3px 8px 8px 3px; box-shadow: 0 8px 18px #0009; }
+.infos { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 16px; margin: 16px 0; }
+.infos dt { font-size: .75rem; color: var(--papier-3); text-transform: uppercase; letter-spacing: .08em; }
+.infos dd { margin: 2px 0 0; }
+.tome-fiche .resume { color: var(--papier-2); font-size: .92rem; }
+input[type="date"] { background: var(--encre-2); border: 1px solid var(--encre-3); border-radius: 10px; padding: 9px 10px; color-scheme: dark; flex: 1; min-width: 0; }
+.feuille .recherche .bouton { width: auto; margin: 0; flex: none; }
+
+/* Grille illustrée : la couverture du tome remplace le numéro (badge en bas) */
+.tomes { grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 10px; }
+.tome { aspect-ratio: 2 / 3; overflow: hidden; padding: 0; }
+.tome img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.tome .n { position: relative; z-index: 1; }
+.tome.illustre { border: 0; }
+.tome.illustre .n { position: absolute; left: 4px; bottom: 4px; font: 700 .8rem var(--sans); background: #000c; color: #fff; padding: 1px 6px; border-radius: 999px; }
+.tome.illustre:not(.possede) img { filter: grayscale(1) brightness(.45); }
+/* 04/11 : jaquette d'un tome manquant ou à paraître : grisée, avec le même cadre que sans jaquette */
+.tome.illustre:not(.possede) { border: 1.5px dashed var(--papier-3); }
+.tome.illustre.avenir { border: 1.5px solid var(--or); }
+.tome.illustre:not(.possede) { outline: 1.5px dashed var(--papier-3); outline-offset: -1.5px; }
+.tome.illustre.possede { box-shadow: 0 4px 10px #0007; }
+.tome.illustre.possede::after { content: "✓"; position: absolute; top: 4px; right: 4px; z-index: 1; width: 20px; height: 20px; border-radius: 50%; background: hsl(var(--teinte) 60% 45%); color: #fff; font: 700 .75rem/20px var(--sans); text-align: center; }
+/* tome illustré pas encore lu : le marque-page doré remplace la coche */
+.tome.illustre.possede.non-lu::after { content: ""; top: -3px; right: 8px; width: 12px; height: 24px; border-radius: 0; background: var(--or);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 72%, 0 100%); filter: drop-shadow(0 2px 3px #000a); z-index: 2; }
+.tome.illustre.avenir { outline: 2px solid var(--or); }
+.tome small { position: relative; z-index: 1; }
+@media (min-width: 760px) { .tomes { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); } }
+.scanner-zone { display: grid; justify-items: center; gap: 2px; font-size: .72rem; color: var(--or); }
+.scanner-zone .scanner-bouton { margin-bottom: 0; }
+
+/* Public et genres */
+.etiquettes { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; }
+.etiquettes span { font-size: .75rem; padding: 3px 10px; border-radius: 999px; background: hsl(var(--teinte, 30) 40% 22%); color: hsl(var(--teinte, 30) 60% 85%); }
+.categorie select { margin-top: 10px; background: var(--encre-2); border: 1px solid var(--encre-3); border-radius: 999px; padding: 8px 14px; max-width: 100%; }
+/* « À acheter » : ruban d'or en haut de la couverture, et dans la fiche de la série */
+.ruban { position: absolute; top: 10px; left: -4px; z-index: 2; background: var(--or); color: #1c140a; font: 700 .7rem/1 system-ui, sans-serif; letter-spacing: .04em; text-transform: uppercase; padding: 5px 9px 5px 10px; border-radius: 0 3px 3px 0; box-shadow: 0 2px 6px #0008; }
+.ruban.dans-fiche { position: static; display: inline-block; border-radius: 3px; margin-bottom: 6px; }
+.case { display: flex; gap: 10px; align-items: center; margin: 14px 0; font-size: .9rem; color: var(--papier-2); cursor: pointer; }
+.case input { width: 20px; height: 20px; accent-color: var(--or); }
+.scan-panneau .bouton.discret[value="envie"] { margin-top: 10px; }
+/* Une étagère par type (04/11) : titre en serif, planche de bois sous chaque rangée */
+.etagere + .etagere { margin-top: 30px; }
+.etagere-titre { font: 600 1.25rem/1.2 var(--serif); color: var(--papier); margin: 18px 0 4px; padding-bottom: 8px; border-bottom: 3px solid var(--encre-3); box-shadow: 0 2px 0 rgba(224, 168, 79, .18); }
+.etagere-titre span { font: 500 .85rem var(--sans); color: var(--papier-3); }
+
+/* Saisons d'une série (04/11) : une rangée de tomes par saison */
+.saison-titre { font: 600 1.05rem/1.2 var(--serif); color: var(--papier-2); margin: 18px 0 6px; }
+.saisons > .saison-titre:first-child { margin-top: 4px; }

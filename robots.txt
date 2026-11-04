@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://etagere-app.github.io/sitemap.xml
