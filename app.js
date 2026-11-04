@@ -106,6 +106,7 @@ function ouvrirMenu() {
         try { montrer(await api('automate', { method: 'POST' })); message(T.automateDemande); } catch (x) { message(x.message); }
       } }),
       etatAuto],
+    el('a.bouton.discret', { href: '#/pile', texte: T.pile, onclick: fermer }),
     el('button.bouton.discret', { texte: T.verifier, onclick: async () => {
       fermer(); message('…');
       if (libre) { await api('libre/synchroniser', { method: 'POST' }); message(T.aJour); afficher(); return; }

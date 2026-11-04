@@ -55,6 +55,6 @@ export async function vueBibliotheque() {
   return el('section', { 'aria-labelledby': 't-biblio' },
     el('h2.sr', { id: 't-biblio', texte: T.bibliotheque }),
     series.length ? el('p.meta', {}, `${series.length} séries · ${possedes} tomes`,
-      nonLus ? [' · ', el('a.lien-pile', { href: '#/pile', texte: `${T.pile} : ${T.nonLus(nonLus)}` })] : '') : '',
+      ' · ', el('a.lien-pile', { href: '#/pile', texte: nonLus ? `${T.pile} : ${T.nonLus(nonLus)}` : `${T.pile} : vide` })) : '', // toujours visible (04/11)
     toutes.length > 3 ? recherche : '', types.length > 2 || envies.length ? puces : '', choixCat, mur, vide);
 }
