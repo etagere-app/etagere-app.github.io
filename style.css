@@ -241,3 +241,6 @@ input[type="date"] { background: var(--encre-2); border: 1px solid var(--encre-3
 /* Saisons d'une série (04/11) : une rangée de tomes par saison */
 .saison-titre { font: 600 1.05rem/1.2 var(--serif); color: var(--papier-2); margin: 18px 0 6px; }
 .saisons > .saison-titre:first-child { margin-top: 4px; }
+/* Version libre : copie consultée sur un autre appareil */
+.consultation { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; border: 1px solid var(--or); margin: 6px 0 14px; }
+.consultation p { margin: 0; flex: 1 1 240px; font-size: .9rem; color: var(--papier-2); }

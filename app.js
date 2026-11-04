@@ -9,7 +9,7 @@ import { vuePile } from './vues/pile.js';
 import { ouvrirScanner } from './scan.js';
 import { activerNotifications } from './notifications.js';
 import { completerFiches } from './vues/serie.js';
-import { boutonSauvegarder, boutonRestaurer, rappelSauvegarde } from './sauvegarde.js';
+import { boutonSauvegarder, boutonRestaurer, rappelSauvegarde, boutonAutreAppareil, vueVoir } from './sauvegarde.js';
 
 // Version libre (04/11) : la page est marquée data-libre par libre/construire.mjs ; le service worker fait le serveur.
 const LIBRE = document.documentElement.hasAttribute('data-libre');
@@ -22,6 +22,7 @@ const ROUTES = [
   [/^#\/a-venir$/, () => vueAVenir()],
   [/^#\/ajouter$/, () => vueAjouter()],
   [/^#\/pile$/, () => vuePile()],
+  [/^#\/voir\/([A-Za-z0-9_-]+)$/, (m) => vueVoir(m[1], () => { history.replaceState(null, '', '#/'); afficher(); })],
   [/^/, () => vueBibliotheque()],
 ];
 
@@ -100,7 +101,7 @@ function ouvrirMenu() {
   const libre = !!session?.libre;
   const feuille = el('div.feuille', { role: 'dialog', 'aria-label': T.menu },
     notif,
-    libre ? [boutonSauvegarder('bouton.discret', fermer), boutonRestaurer(() => { fermer(); afficher(); })] : [
+    libre ? [boutonSauvegarder('bouton.discret', fermer), boutonRestaurer(() => { fermer(); afficher(); }), boutonAutreAppareil(fermer)] : [
       el('button.bouton.discret', { texte: T.automate, onclick: async () => {
         try { montrer(await api('automate', { method: 'POST' })); message(T.automateDemande); } catch (x) { message(x.message); }
       } }),
