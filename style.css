@@ -217,9 +217,11 @@ input[type="date"] { background: var(--encre-2); border: 1px solid var(--encre-3
 .tome.illustre.possede { box-shadow: 0 4px 10px #0007; }
 .tome.illustre.possede::after { content: "✓"; position: absolute; top: 4px; right: 4px; z-index: 1; width: 20px; height: 20px; border-radius: 50%; background: hsl(var(--teinte) 60% 45%); color: #fff; font: 700 .75rem/20px var(--sans); text-align: center; }
 /* tome illustré pas encore lu : le marque-page doré remplace la coche */
-.tome.illustre.possede.non-lu::after { content: ""; top: 0; right: 7px; width: 14px; height: 28px; border-radius: 0; background: var(--or);
+.tome.illustre.possede.non-lu::after { content: ""; top: 0; right: 6px; width: 17px; height: 34px; border-radius: 0; background: var(--or);
   clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 74%, 0 100%); filter: drop-shadow(0 0 1.5px #000) drop-shadow(0 2px 3px #000a); z-index: 2; }
-.tome.illustre.possede.non-lu img { filter: saturate(.35) brightness(.6); } /* couverture assombrie : encore à lire */
+/* couleurs gardées (un tome manquant est gris) : juste voilée, encore à lire */
+.tome.illustre.possede.non-lu img { filter: brightness(.72); }
+.tome.illustre.possede.non-lu { outline: 2px solid var(--or); } /* à l'extérieur : une image positionnée recouvre un contour intérieur */
 .tome.illustre.avenir { outline: 2px solid var(--or); }
 .tome small { position: relative; z-index: 1; }
 @media (min-width: 760px) { .tomes { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); } }
