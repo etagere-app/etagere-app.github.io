@@ -176,6 +176,16 @@ h2 { font: 600 1.35rem/1.2 var(--serif); margin: 18px 0 10px; }
 .pied { text-align: center; font-size: .8rem; color: var(--papier-3); margin: 32px 0 8px; }
 .pied a { color: var(--papier-3); }
 
+/* Téléphone (05/11, Olivier : jaquettes trop grandes) : 3 par ligne, textes de la couverture à l'échelle */
+@media (max-width: 559px) {
+  .mur { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px 10px; }
+  .mur .couv { border-radius: 3px 7px 7px 3px; box-shadow: 0 6px 14px #0008, inset 4px 0 0 #0000003a, inset 5px 0 0 #ffffff12; }
+  .mur .couv .titre-couv { inset: 22px 7px 28px 11px; padding-top: 6px; font-size: .78rem; }
+  .mur .couv .type { top: 5px; right: 5px; font-size: .52rem; padding: 1px 5px; letter-spacing: .08em; }
+  .mur .couv .compteur { padding: 12px 6px 5px; font-size: .7rem; }
+  .mur .compteur b { font-size: .85rem; }
+  .mur .livre .nom { margin-top: 5px; font-size: .78rem; }
+}
 @media (min-width: 760px) {
   .mur { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 26px 20px; }
   .fiche { grid-template-columns: 160px 1fr; }
