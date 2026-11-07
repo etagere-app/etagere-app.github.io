@@ -33,7 +33,7 @@ function lienBarre(href, nom, texte) {
 
 function cadre(contenu) {
   const entete = el('header.entete', {}, el('div.marque', {},
-    el('h1', {}, 'Étag', el('span', { texte: 'è' }), 're'),
+    el('h1', {}, el('a.titre-accueil', { href: '#/', 'aria-label': 'Étagère, retour à la bibliothèque' }, 'Étag', el('span', { texte: 'è' }), 're')),
     el('button.menu-bouton', { 'aria-label': T.menu, onclick: ouvrirMenu }, icone('menu'))));
   const barre = el('nav.barre', { 'aria-label': 'Navigation' },
     lienBarre('#/', 'livres', T.bibliotheque),
