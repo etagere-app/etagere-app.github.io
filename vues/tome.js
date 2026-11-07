@@ -12,6 +12,7 @@ export function ouvrirTome(serie, t, apres) {
   const img = t.couverture ? el('img.tome-couv', { src: `/api/couverture/${serie.id}/${t.numero}`, alt: `Couverture du tome ${t.numero}` }) : '';
   if (img) img.addEventListener('error', () => img.remove());
   const date = el('input', { type: 'date', value: t.sortie_le || '', 'aria-label': T.dateSortie });
+  const pretInput = el('input', { type: 'text', maxlength: 60, placeholder: T.aQui, 'aria-label': T.aQui });
   const feuille = el('div.feuille.tome-fiche', { role: 'dialog', 'aria-label': `${serie.titre}, tome ${t.numero}` },
     el('div.tome-tete', {}, img, el('div', {},
       el('p.meta', { texte: serie.titre }),
@@ -20,6 +21,7 @@ export function ouvrirTome(serie, t, apres) {
     el('dl.infos', {},
       ligne(T.possedeLe, t.possede ? dateLongue(t.achete_le) || T.oui : null),
       ligne(T.luLe, t.possede && t.lu ? dateLongue(t.lu_le) || T.oui : null),
+      ligne(T.preteA, t.prete_a ? `${t.prete_a}${t.prete_le ? ` (${T.depuisLe} ${dateLongue(t.prete_le)})` : ''}` : null),
       ligne(T.parution, dateLongue(t.parution)),
       ligne(T.pages, t.pages),
       ligne('ISBN', t.isbn)),
@@ -32,6 +34,13 @@ export function ouvrirTome(serie, t, apres) {
       texte: t.lu ? T.pasEncoreLu : T.jeLaiLu,
       onclick: async () => { await api(`series/${serie.id}/tomes/${t.numero}`, { method: 'PUT', corps: { lu: !t.lu } }); fermer(); apres(); },
     }) : '',
+    t.possede ? (t.prete_a   // prêt : rendu si déjà prêté, sinon un champ « à qui ? »
+      ? el('button.bouton.discret', { texte: T.marquerRendu, onclick: async () => { await api(`series/${serie.id}/tomes/${t.numero}`, { method: 'PUT', corps: { prete_a: '' } }); fermer(); apres(); } })
+      : el('form.champ', {
+          onsubmit: async (e) => { e.preventDefault(); const nom = pretInput.value.trim(); if (!nom) return message(T.aQui);
+            await api(`series/${serie.id}/tomes/${t.numero}`, { method: 'PUT', corps: { prete_a: nom } }); fermer(); apres(); },
+        }, el('span', { texte: T.preter }), el('div.recherche', {}, pretInput, el('button.bouton.discret', { texte: T.preter })))
+    ) : '',
     el('form.champ', {
       onsubmit: async (e) => {
         e.preventDefault();

@@ -6,6 +6,8 @@ import { vueSerie } from './vues/serie.js';
 import { vueAVenir } from './vues/a-venir.js';
 import { vueAjouter } from './vues/ajouter.js';
 import { vuePile } from './vues/pile.js';
+import { vuePrets } from './vues/prets.js';
+import { vueBilan } from './vues/bilan.js';
 import { ouvrirScanner } from './scan.js';
 import { activerNotifications } from './notifications.js';
 import { completerFiches } from './vues/serie.js';
@@ -22,6 +24,8 @@ const ROUTES = [
   [/^#\/a-venir$/, () => vueAVenir()],
   [/^#\/ajouter$/, () => vueAjouter()],
   [/^#\/pile$/, () => vuePile()],
+  [/^#\/prets$/, () => vuePrets()],
+  [/^#\/bilan$/, () => vueBilan()],
   [/^#\/voir\/([A-Za-z0-9_-]+)$/, (m) => vueVoir(m[1], () => { history.replaceState(null, '', '#/'); afficher(); })],
   [/^/, () => vueBibliotheque()],
 ];
@@ -107,6 +111,8 @@ function ouvrirMenu() {
       } }),
       etatAuto],
     el('a.bouton.discret', { href: '#/pile', texte: T.pile, onclick: fermer }),
+    el('a.bouton.discret', { href: '#/prets', texte: T.prets, onclick: fermer }),
+    el('a.bouton.discret', { href: '#/bilan', texte: T.bilan, onclick: fermer }),
     el('button.bouton.discret', { texte: T.verifier, onclick: async () => {
       fermer(); message('…');
       if (libre) { await api('libre/synchroniser', { method: 'POST' }); message(T.aJour); afficher(); return; }

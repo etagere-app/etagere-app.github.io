@@ -106,6 +106,26 @@ h2 { font: 600 1.35rem/1.2 var(--serif); margin: 18px 0 10px; }
 .pile-tete h3 a { color: var(--papier); text-decoration: none; }
 .pile-tete h3 span { color: var(--papier-3); font: 500 .9rem var(--sans); }
 .pile-tete .bouton { padding: 7px 14px; font-size: .85rem; }
+/* Prêts en cours */
+.prets { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+.pret { display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--encre-2); border: 1px solid var(--encre-3); border-radius: var(--rayon); }
+.pret img { width: 40px; height: 58px; object-fit: cover; border-radius: 3px; flex: none; }
+.pret > div { flex: 1; min-width: 0; }
+.pret h3 { font: 600 1.05rem var(--serif); margin: 0; }
+.pret h3 a { color: var(--papier); text-decoration: none; }
+.pret h3 span { color: var(--papier-3); font: 500 .85rem var(--sans); }
+.pret .meta { margin: 2px 0 0; }
+.pret .bouton { flex: none; padding: 7px 12px; font-size: .85rem; }
+/* Bilan de lecture */
+.sous-titre { font: 600 1.1rem var(--serif); color: var(--papier); margin: 22px 0 10px; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+.stat { background: var(--encre-2); border: 1px solid var(--encre-3); border-radius: var(--rayon); padding: 14px 16px; text-align: center; }
+.stat b { display: block; font: 700 2rem var(--serif); color: var(--or); line-height: 1; }
+.stat span { display: block; color: var(--papier-2); font-size: .85rem; margin-top: 6px; }
+.repartition { display: flex; flex-wrap: wrap; gap: 10px; }
+.rep { background: var(--encre-2); border: 1px solid var(--encre-3); border-radius: 999px; padding: 8px 16px; display: flex; align-items: baseline; gap: 8px; }
+.rep b { font: 700 1.1rem var(--serif); color: var(--papier); }
+.rep span { color: var(--papier-2); font-size: .85rem; }
 .tome small { font: 500 .62rem var(--sans); letter-spacing: .02em; }
 .tome.vient { animation: pose .35s ease; }
 @keyframes pose { from { transform: translateY(-10px) scale(1.08); } to { transform: none; } }
