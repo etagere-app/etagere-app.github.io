@@ -55,6 +55,7 @@ const CHEMINS = {
   menu: 'M4 7h16M4 12h16M4 17h16',
   retour: 'M15 5l-7 7 7 7',
   fermer: 'M6 6l12 12M18 6 6 18',
+  lecture: 'M3 21h18M6 21v-7M12 21V5M18 21v-10',
 };
 export function icone(nom) {
   const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');

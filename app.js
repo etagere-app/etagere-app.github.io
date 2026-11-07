@@ -44,7 +44,7 @@ function cadre(contenu) {
     lienBarre('#/a-venir', 'calendrier', T.aVenir),
     el('div.scanner-zone', {}, el('button.scanner-bouton', { 'aria-label': T.noterAchat, onclick: () => ouvrirScanner(afficher) }, icone('scan')), el('span', { texte: T.ajouterTome })),
     lienBarre('#/ajouter', 'plus', T.ajouter),
-    el('a', { href: '#', onclick: (e) => { e.preventDefault(); ouvrirMenu(); } }, icone('menu'), T.menu));
+    lienBarre('#/bilan', 'lecture', T.bilan));   // le menu est déjà dans l'en-tête : la 5e place de la barre sert à « Ma lecture »
   const main = el('main', { id: 'contenu', tabindex: '-1' }, contenu);
   app.replaceChildren(entete, main, barre);
   bandeau();
