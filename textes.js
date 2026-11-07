@@ -55,6 +55,13 @@ export const T = {
   possedeLe: 'Acheté le', oui: 'oui', parution: 'Paru le', pages: 'Pages', dateSortie: 'Date de sortie en France',
   jeLai: 'Je l’ai', jeNeLaiPlus: 'Je ne l’ai plus',
   achatNote: (titre, n) => `${titre} · tome ${n} ajouté`,
+  // Notification mensuelle groupée des sorties (worker/sorties.js) : une seule notif, jamais une par tome.
+  sorties: {
+    item: (titre, libelle) => `${titre} ${libelle}`,              // « Dandadan tome 19 »
+    apercu: (items) => items.slice(0, 3).join(', ') + (items.length > 3 ? ` (+${items.length - 3})` : ''),
+    titre: (apercu) => `Ce qui sort ce mois : ${apercu}`,
+    ligne: (item, date) => `${item} — ${date}`,                   // une ligne par tome dans le corps
+  },
   // Version libre (04/11) : textes qui remplacent ceux d'Olivier (la bibliothèque reste dans le téléphone)
   libre: {
     bandeau: 'Étagère ne dépose aucun cookie et aucun traceur : ta bibliothèque reste dans ce téléphone.',
