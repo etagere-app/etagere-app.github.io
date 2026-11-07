@@ -60,6 +60,7 @@ export const T = {
     item: (titre, libelle) => `${titre} ${libelle}`,              // « Dandadan tome 19 »
     apercu: (items) => items.slice(0, 3).join(', ') + (items.length > 3 ? ` (+${items.length - 3})` : ''),
     titre: (apercu) => `Ce qui sort ce mois : ${apercu}`,
+    titreJour: (apercu, n) => `${n > 1 ? 'Sortent' : 'Sort'} aujourd'hui : ${apercu}`,  // rappel le jour de parution
     ligne: (item, date) => `${item} — ${date}`,                   // une ligne par tome dans le corps
   },
   // Version libre (04/11) : textes qui remplacent ceux d'Olivier (la bibliothèque reste dans le téléphone)
