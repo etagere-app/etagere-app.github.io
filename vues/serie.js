@@ -3,7 +3,7 @@
 import { T } from '../textes.js';
 import { api, el, icone, teinte, couverture, message, dateCourte } from '../commun.js';
 import { ouvrirTome, photographierCouverture } from './tome.js';
-import { lireSaisons, versLocal, aDesSaisons, libelleTome } from '../saisons.js';
+import { lireSaisons, versLocal, aDesSaisons, libelleTome, nomSaison } from '../saisons.js';
 
 const lireMode = () => { try { return localStorage.getItem('etagere-mode-tome') || 'cocher'; } catch { return 'cocher'; } };
 const ecrireMode = (m) => { try { localStorage.setItem('etagere-mode-tome', m); } catch { /* stockage bloqué */ } };
@@ -35,7 +35,7 @@ function grille(serie, maj, rafraichir) {
     const nonLu = t.possede && !t.lu; // pile de la honte : marque-page doré
     const b = el(`button.tome${t.possede ? '.possede' : ''}${nonLu ? '.non-lu' : ''}${avenir ? '.avenir' : ''}`, {
       'aria-pressed': String(!!t.possede),
-      'aria-label': `${libelleTome(serie.saisons, n)} : ${t.possede ? `${T.lPossede}${nonLu ? `, ${T.lNonLu.toLowerCase()}` : ''}` : avenir ? `${T.lAvenir} le ${dateCourte(t.sortie_le)}` : T.lManque}`,
+      'aria-label': `${libelleTome(serie.saisons, n, serie.saisons_noms)} : ${t.possede ? `${T.lPossede}${nonLu ? `, ${T.lNonLu.toLowerCase()}` : ''}` : avenir ? `${T.lAvenir} le ${dateCourte(t.sortie_le)}` : T.lManque}`,
       onclick: async () => {
         if (lireMode() === 'fiche') return ouvrirTome(serie, t, rafraichir);
         if (lireMode() === 'lire') {
@@ -65,7 +65,8 @@ function grille(serie, maj, rafraichir) {
   saisons.forEach((s, i) => {
     const fin = i + 1 < saisons.length ? saisons[i + 1].debut - 1 : parus;
     if (fin < s.debut) return;
-    zone.append(el('h3.saison-titre', { texte: `Saison ${s.saison} · ${fin - s.debut + 1} tome${fin > s.debut ? 's' : ''}` }), rangee(s.debut, fin, `Saison ${s.saison}`));
+    const nom = nomSaison(serie.saisons_noms, s.saison) || `Saison ${s.saison}`;
+    zone.append(el('h3.saison-titre', { texte: `${nom} · ${fin - s.debut + 1} tome${fin > s.debut ? 's' : ''}` }), rangee(s.debut, fin, nom));
   });
   return zone;
 }
@@ -105,6 +106,33 @@ function formulaire(serie, rafraichir) {
       await api(`series/${serie.id}`, { method: 'DELETE' }); location.hash = '#/';
     },
   })));
+  return f;
+}
+
+// Ranger cette série (un arc : « Sword Art Online - Aincrad ») comme SAISON NOMMÉE d'une série parente.
+function formRanger(serie) {
+  const choix = el('select', { name: 'cible' }, el('option', { value: '', texte: `+ ${T.nouvelleSerie}` }));
+  const titre = el('input', { placeholder: T.titre, 'aria-label': T.titre });
+  const nom = el('input', { value: serie.titre, 'aria-label': T.nomSaisonArc, maxlength: '60' });
+  api('series').then((series) => series.filter((s) => s.id !== serie.id).forEach((s) => choix.append(el('option', { value: String(s.id), texte: s.titre })))).catch(() => {});
+  const maj = () => { titre.hidden = !!choix.value; };
+  choix.addEventListener('change', maj);
+  const f = el('form.carte', {
+    onsubmit: async (e) => {
+      e.preventDefault();
+      if (!choix.value && !titre.value.trim()) { message(T.titre); titre.focus(); return; }
+      const bouton = e.submitter || e.currentTarget.querySelector('button[type="submit"]'); bouton.disabled = true;
+      try {
+        const r = await api(`series/${serie.id}/ranger-saison`, { method: 'POST', corps: {
+          cible_id: choix.value ? Number(choix.value) : null, titre: titre.value.trim(), type: serie.type, nom: nom.value.trim() } });
+        message(T.serieRangee); location.hash = `#/serie/${r.serie_id}`;
+      } catch (x) { message(x.message || T.erreurReseau); bouton.disabled = false; }
+    },
+  }, el('p.aide', { texte: T.rangerAide }),
+    el('label.champ', {}, el('span', { texte: T.serieParente }), choix), titre,
+    el('label.champ', {}, el('span', { texte: T.nomSaisonArc }), nom),
+    el('div.actions', {}, el('button.bouton', { type: 'submit', texte: T.ranger }), el('button.bouton.discret', { type: 'button', texte: T.annuler, onclick: () => f.remove() })));
+  maj();
   return f;
 }
 
@@ -153,7 +181,8 @@ export async function vueSerie(id) {
     el('button.bouton.discret', { texte: T.completerFiche, onclick: async (e) => {
       e.currentTarget.disabled = true; message('Recherche des infos…');
       try { const r = await completerFiches(); message(`${r.total} tome(s) complété(s)`); rafraichir(); } catch (x) { message(x.message); e.currentTarget.disabled = false; }
-    } }));
+    } }),
+    el('button.bouton.discret', { texte: T.rangerSaison, onclick: (e) => e.currentTarget.closest('.actions').after(formRanger(serie)) }));
   const modes = el('div.onglets.modes', { role: 'group', 'aria-label': T.toucherUnNumero },
     ...[['cocher', T.modeCocher], ['lire', T.modeLire], ['fiche', T.modeFiche]].map(([m, t]) => el('button', {
       type: 'button', 'aria-pressed': String(lireMode() === m), 'aria-selected': String(lireMode() === m), texte: t,

@@ -16,7 +16,7 @@ export function ouvrirTome(serie, t, apres) {
   const feuille = el('div.feuille.tome-fiche', { role: 'dialog', 'aria-label': `${serie.titre}, tome ${t.numero}` },
     el('div.tome-tete', {}, img, el('div', {},
       el('p.meta', { texte: serie.titre }),
-      el('h3', { texte: libelleTome(serie.saisons, t.numero) }),
+      el('h3', { texte: libelleTome(serie.saisons, t.numero, serie.saisons_noms) }),
       t.titre && t.titre !== `${serie.titre} T${t.numero}` ? el('p.meta', { texte: t.titre }) : '')),
     el('dl.infos', {},
       ligne(T.possedeLe, t.possede ? dateLongue(t.achete_le) || T.oui : null),
@@ -64,7 +64,7 @@ export function ouvrirTome(serie, t, apres) {
     choix.addEventListener('change', maj); maj();
     feuille.replaceChildren(
       el('h3', { texte: T.deplacerTitre }),
-      el('p.meta', { texte: `${serie.titre} · ${libelleTome(serie.saisons, t.numero)}` }),
+      el('p.meta', { texte: `${serie.titre} · ${libelleTome(serie.saisons, t.numero, serie.saisons_noms)}` }),
       el('p.aide', { texte: T.aideDeplacer }),
       el('form', {
         onsubmit: async (e) => {

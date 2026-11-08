@@ -51,9 +51,24 @@ export const saisonsIncompletes = (texte) => lireSaisons(texte).some((x) => x.sa
 
 export const aDesSaisons = (texte) => lireSaisons(texte).length > 1;
 
-// « Tome 5 », ou « Saison 2 · tome 5 » quand la série a des saisons
-export function libelleTome(texte, n) {
+// Noms des saisons/arcs (séparés de la numérotation, que l'automate reconstruit) : JSON { "1": "Aincrad", "2": "Fairy Dance" }.
+export function lireNoms(v) {
+  if (v && typeof v === 'object') return v;
+  try { const o = JSON.parse(v || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; }
+}
+export const nomSaison = (noms, saison) => { const o = lireNoms(noms); return o[saison] || o[String(saison)] || null; };
+export function ecrireNoms(obj) {
+  const net = {};
+  for (const [k, val] of Object.entries(lireNoms(obj))) {
+    const s = Number(k), nom = String(val || '').replace(/[|:]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
+    if (Number.isInteger(s) && s >= 1 && s <= 99 && nom) net[s] = nom;
+  }
+  return Object.keys(net).length ? JSON.stringify(net) : null;
+}
+
+// « Tome 5 », « Saison 2 · tome 5 », ou « Aincrad · tome 5 » si la saison porte un nom (noms = series.saisons_noms).
+export function libelleTome(texte, n, noms) {
   if (!aDesSaisons(texte)) return `Tome ${n}`;
   const { saison, numero } = versLocal(texte, n);
-  return `Saison ${saison} · tome ${numero}`;
+  return `${nomSaison(noms, saison) || `Saison ${saison}`} · tome ${numero}`;
 }
