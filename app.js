@@ -126,6 +126,7 @@ function ouvrirMenu() {
       } catch (x) { message(x.message); }
     } }),
     libre ? '' : el('a.bouton.discret', { href: '/api/export', download: 'etagere.json', texte: T.exporter }),
+    el('a.bouton.discret', { href: '/aide.html', texte: T.aide }),
     libre ? '' : el('button.bouton.danger', { texte: T.deconnexion, onclick: async () => { await api('deconnexion', { method: 'POST' }); fermer(); ecranConnexion(); } }),
     piedLegal());
   document.body.append(voile, feuille);

@@ -8,7 +8,7 @@ export const T = {
   aVenir: 'À venir',
   ajouter: 'Saisir', ajouterTome: 'Ajouter',
   scanner: 'Scanner',
-  menu: 'Menu',
+  menu: 'Menu', aide: 'Comment ça marche',
   rechercher: 'Rechercher une série',
   tout: 'Tout', aAcheter: 'À acheter', tomesParus: (n) => `${n} tome${n > 1 ? 's' : ''} paru${n > 1 ? 's' : ''}`,
   envie: 'Envie de commencer', aideEnvie: 'Pas encore achetée : elle va dans « À acheter », sans aucun tome coché. Elle passe dans ta collection dès ton 1er tome.',
