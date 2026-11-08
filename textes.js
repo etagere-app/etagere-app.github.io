@@ -58,6 +58,7 @@ export const T = {
   deplacer: 'Déplacer vers une autre série', deplacerTitre: 'Déplacer ce tome',
   aideDeplacer: 'Pour réparer une fusion (ex. un spin-off rangé avec la série de base). Le tome part avec tout son état.',
   tomeDeplace: 'Tome déplacé.',
+  titreTome: 'Titre de ce tome', titreTomePlace: 'ex. Les Misérables',
   rangerSaison: 'Ranger comme saison d’une autre série', serieParente: 'Série parente', nomSaisonArc: 'Nom de la saison / arc', ranger: 'Ranger',
   rangerAide: 'Regroupe cet arc comme une saison NOMMÉE d’une série (ex. « Aincrad », « Fairy Dance » dans Sword Art Online). Tous ses tomes partent, avec leur état, à la suite des saisons déjà présentes.',
   serieRangee: 'Arc rangé en saison.',

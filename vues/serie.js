@@ -33,9 +33,11 @@ function grille(serie, maj, rafraichir) {
     const local = saisons ? versLocal(saisons, n) : { numero: n };
     const avenir = !t.possede && t.sortie_le && t.sortie_le > new Date().toISOString().slice(0, 10);
     const nonLu = t.possede && !t.lu; // pile de la honte : marque-page doré
+    const titreTome = t.titre && t.titre !== `${serie.titre} T${n}` ? t.titre : ''; // titre propre (collection de romans : « n°12 · Les Misérables »)
     const b = el(`button.tome${t.possede ? '.possede' : ''}${nonLu ? '.non-lu' : ''}${avenir ? '.avenir' : ''}`, {
       'aria-pressed': String(!!t.possede),
-      'aria-label': `${libelleTome(serie.saisons, n, serie.saisons_noms)} : ${t.possede ? `${T.lPossede}${nonLu ? `, ${T.lNonLu.toLowerCase()}` : ''}` : avenir ? `${T.lAvenir} le ${dateCourte(t.sortie_le)}` : T.lManque}`,
+      title: titreTome || undefined,
+      'aria-label': `${libelleTome(serie.saisons, n, serie.saisons_noms)}${titreTome ? ` · ${titreTome}` : ''} : ${t.possede ? `${T.lPossede}${nonLu ? `, ${T.lNonLu.toLowerCase()}` : ''}` : avenir ? `${T.lAvenir} le ${dateCourte(t.sortie_le)}` : T.lManque}`,
       onclick: async () => {
         if (lireMode() === 'fiche') return ouvrirTome(serie, t, rafraichir);
         if (lireMode() === 'lire') {

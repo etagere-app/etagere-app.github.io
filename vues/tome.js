@@ -13,6 +13,7 @@ export function ouvrirTome(serie, t, apres) {
   if (img) img.addEventListener('error', () => img.remove());
   const date = el('input', { type: 'date', value: t.sortie_le || '', 'aria-label': T.dateSortie });
   const pretInput = el('input', { type: 'text', maxlength: 60, placeholder: T.aQui, 'aria-label': T.aQui });
+  const titreInput = el('input', { type: 'text', maxlength: 200, value: t.titre && t.titre !== `${serie.titre} T${t.numero}` ? t.titre : '', placeholder: T.titreTomePlace, 'aria-label': T.titreTome });
   const feuille = el('div.feuille.tome-fiche', { role: 'dialog', 'aria-label': `${serie.titre}, tome ${t.numero}` },
     el('div.tome-tete', {}, img, el('div', {},
       el('p.meta', { texte: serie.titre }),
@@ -48,6 +49,13 @@ export function ouvrirTome(serie, t, apres) {
         catch (x) { message(x.message); }
       },
     }, el('span', { texte: T.dateSortie }), el('div.recherche', {}, date, el('button.bouton.discret', { texte: T.enregistrer }))),
+    el('form.champ', {
+      onsubmit: async (e) => {
+        e.preventDefault();
+        try { await api(`series/${serie.id}/tomes/${t.numero}`, { method: 'PUT', corps: { titre: titreInput.value } }); message('Titre enregistré'); fermer(); apres(); }
+        catch (x) { message(x.message); }
+      },
+    }, el('span', { texte: T.titreTome }), el('div.recherche', {}, titreInput, el('button.bouton.discret', { texte: T.enregistrer }))),
     el('button.bouton.discret', { texte: T.deplacer, onclick: () => montrerDeplacer() }),
     el('button.bouton.discret', { texte: 'Fermer', onclick: fermer }));
 
