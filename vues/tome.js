@@ -48,7 +48,43 @@ export function ouvrirTome(serie, t, apres) {
         catch (x) { message(x.message); }
       },
     }, el('span', { texte: T.dateSortie }), el('div.recherche', {}, date, el('button.bouton.discret', { texte: T.enregistrer }))),
+    el('button.bouton.discret', { texte: T.deplacer, onclick: () => montrerDeplacer() }),
     el('button.bouton.discret', { texte: 'Fermer', onclick: fermer }));
+
+  // Déplacer ce tome vers une autre série (réparer une fusion), avec tout son état.
+  async function montrerDeplacer() {
+    let series = [];
+    try { series = (await api('series')).filter((s) => s.id !== serie.id); } catch { /* liste vide : nouvelle série seulement */ }
+    const choix = el('select', { 'aria-label': T.serie }, el('option', { value: '', texte: `+ ${T.nouvelleSerie}` }),
+      ...series.map((s) => el('option', { value: String(s.id), texte: s.titre })));
+    const titre = el('input', { placeholder: T.titre, 'aria-label': T.titre });
+    const type = el('select', { 'aria-label': T.type }, ...Object.entries(T.types).map(([k, v]) => el('option', { value: k, selected: k === serie.type, texte: v })));
+    const num = el('input', { type: 'number', min: '1', max: '999', value: String(t.numero), required: true, 'aria-label': T.numero });
+    const maj = () => { const nouv = !choix.value; titre.hidden = !nouv; type.hidden = !nouv; };
+    choix.addEventListener('change', maj); maj();
+    feuille.replaceChildren(
+      el('h3', { texte: T.deplacerTitre }),
+      el('p.meta', { texte: `${serie.titre} · ${libelleTome(serie.saisons, t.numero)}` }),
+      el('p.aide', { texte: T.aideDeplacer }),
+      el('form', {
+        onsubmit: async (e) => {
+          e.preventDefault();
+          if (!choix.value && !titre.value.trim()) { message(T.titre); titre.focus(); return; }
+          const bouton = e.submitter || e.currentTarget.querySelector('button[type="submit"]'); bouton.disabled = true;
+          try {
+            const r = await api(`series/${serie.id}/tomes/${t.numero}/deplacer`, { method: 'POST', corps: {
+              serie_id: choix.value ? Number(choix.value) : null, titre: titre.value.trim(), type: type.value, numero: Number(num.value) } });
+            message(T.tomeDeplace); fermer(); location.hash = `#/serie/${r.serie_id}`;
+          } catch (x) { message(x.message || T.erreurReseau); bouton.disabled = false; }
+        },
+      },
+        el('label.champ', {}, el('span', { texte: T.serie }), choix), titre, type,
+        el('label.champ', {}, el('span', { texte: T.numero }), num),
+        el('div.recherche', {}, el('button.bouton.or', { type: 'submit', texte: T.deplacer }),
+          el('button.bouton.discret', { type: 'button', texte: T.annuler, onclick: fermer }))));
+    feuille.querySelector('select').focus();
+  }
+
   document.body.append(voile, feuille);
   feuille.querySelector('button').focus();
   feuille.addEventListener('keydown', (e) => e.key === 'Escape' && fermer());

@@ -55,6 +55,9 @@ export const T = {
   possedeLe: 'Acheté le', oui: 'oui', parution: 'Paru le', pages: 'Pages', dateSortie: 'Date de sortie en France',
   jeLai: 'Je l’ai', jeNeLaiPlus: 'Je ne l’ai plus',
   achatNote: (titre, n) => `${titre} · tome ${n} ajouté`,
+  deplacer: 'Déplacer vers une autre série', deplacerTitre: 'Déplacer ce tome',
+  aideDeplacer: 'Pour réparer une fusion (ex. un spin-off rangé avec la série de base). Le tome part avec tout son état.',
+  tomeDeplace: 'Tome déplacé.',
   // Notification mensuelle groupée des sorties (worker/sorties.js) : une seule notif, jamais une par tome.
   sorties: {
     item: (titre, libelle) => `${titre} ${libelle}`,              // « Dandadan tome 19 »
