@@ -138,6 +138,28 @@ function formRanger(serie) {
   return f;
 }
 
+// Réordonner (↑↓) et renommer les saisons / arcs d'une série (corrige l'ordre après des regroupements).
+function formSaisons(serie, rafraichir) {
+  const liste = lireSaisons(serie.saisons).map((s) => ({ saison: s.saison, nom: nomSaison(serie.saisons_noms, s.saison) || '' }));
+  const corpsEl = el('div.saisons-edit');
+  const dessiner = () => corpsEl.replaceChildren(...liste.map((s, i) => el('div.ligne-saison', {},
+    el('span.rang', { texte: `${i + 1}.` }),
+    el('input', { value: s.nom, placeholder: `Saison ${i + 1}`, maxlength: '60', 'aria-label': `Nom de la saison ${i + 1}`, oninput: (e) => { s.nom = e.target.value; } }),
+    el('button.bouton.discret', { type: 'button', texte: '↑', 'aria-label': 'Monter', disabled: i === 0, onclick: () => { [liste[i - 1], liste[i]] = [liste[i], liste[i - 1]]; dessiner(); } }),
+    el('button.bouton.discret', { type: 'button', texte: '↓', 'aria-label': 'Descendre', disabled: i === liste.length - 1, onclick: () => { [liste[i + 1], liste[i]] = [liste[i], liste[i + 1]]; dessiner(); } }))));
+  dessiner();
+  const f = el('form.carte', {
+    onsubmit: async (e) => {
+      e.preventDefault();
+      const noms = {}; liste.forEach((s, i) => { if (s.nom.trim()) noms[i + 1] = s.nom.trim(); });
+      try { await api(`series/${serie.id}/saisons`, { method: 'PATCH', corps: { ordre: liste.map((s) => s.saison), noms } }); message('Saisons mises à jour'); rafraichir(); }
+      catch (x) { message(x.message || T.erreurReseau); }
+    },
+  }, el('p.aide', { texte: T.aideSaisons }), corpsEl,
+    el('div.actions', {}, el('button.bouton', { type: 'submit', texte: T.enregistrer }), el('button.bouton.discret', { type: 'button', texte: T.annuler, onclick: () => f.remove() })));
+  return f;
+}
+
 export async function vueSerie(id) {
   const serie = await api(`series/${id}`);
   const zone = el('section', { 'aria-labelledby': 't-serie' });
@@ -184,7 +206,8 @@ export async function vueSerie(id) {
       e.currentTarget.disabled = true; message('Recherche des infos…');
       try { const r = await completerFiches(); message(`${r.total} tome(s) complété(s)`); rafraichir(); } catch (x) { message(x.message); e.currentTarget.disabled = false; }
     } }),
-    el('button.bouton.discret', { texte: T.rangerSaison, onclick: (e) => e.currentTarget.closest('.actions').after(formRanger(serie)) }));
+    el('button.bouton.discret', { texte: T.rangerSaison, onclick: (e) => e.currentTarget.closest('.actions').after(formRanger(serie)) }),
+    aDesSaisons(serie.saisons) ? el('button.bouton.discret', { texte: T.organiserSaisons, onclick: (e) => e.currentTarget.closest('.actions').after(formSaisons(serie, rafraichir)) }) : '');
   const modes = el('div.onglets.modes', { role: 'group', 'aria-label': T.toucherUnNumero },
     ...[['cocher', T.modeCocher], ['lire', T.modeLire], ['fiche', T.modeFiche]].map(([m, t]) => el('button', {
       type: 'button', 'aria-pressed': String(lireMode() === m), 'aria-selected': String(lireMode() === m), texte: t,

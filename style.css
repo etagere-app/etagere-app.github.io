@@ -281,3 +281,10 @@ input[type="date"] { background: var(--encre-2); border: 1px solid var(--encre-3
 /* Version libre : copie consultée sur un autre appareil */
 .consultation { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; border: 1px solid var(--or); margin: 6px 0 14px; }
 .consultation p { margin: 0; flex: 1 1 240px; font-size: .9rem; color: var(--papier-2); }
+
+/* Éditeur des saisons / arcs (réordonner + renommer) */
+.saisons-edit { display: flex; flex-direction: column; gap: 8px; margin: 6px 0; }
+.ligne-saison { display: flex; gap: 6px; align-items: center; }
+.ligne-saison .rang { width: 1.6em; text-align: right; color: var(--papier-2); font-variant-numeric: tabular-nums; }
+.ligne-saison input { flex: 1; min-width: 0; }
+.ligne-saison .bouton { padding: 6px 10px; }

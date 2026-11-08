@@ -62,6 +62,7 @@ export const T = {
   rangerSaison: 'Ranger comme saison d’une autre série', serieParente: 'Série parente', nomSaisonArc: 'Nom de la saison / arc', ranger: 'Ranger',
   rangerAide: 'Regroupe cet arc comme une saison NOMMÉE d’une série (ex. « Aincrad », « Fairy Dance » dans Sword Art Online). Tous ses tomes partent, avec leur état, à la suite des saisons déjà présentes.',
   serieRangee: 'Arc rangé en saison.',
+  organiserSaisons: 'Saisons / arcs', aideSaisons: 'Réordonne (↑ ↓) et renomme les saisons / arcs. La numérotation des tomes se met à jour toute seule.',
   // Notification mensuelle groupée des sorties (worker/sorties.js) : une seule notif, jamais une par tome.
   sorties: {
     item: (titre, libelle) => `${titre} ${libelle}`,              // « Dandadan tome 19 »
