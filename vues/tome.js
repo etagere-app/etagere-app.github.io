@@ -1,23 +1,21 @@
 // Fiche d'un tome (feuille du bas) : couverture, titre, pages, parution, ISBN, achat, date de sortie modifiable.
 import { T } from '../textes.js';
 import { libelleTome } from '../saisons.js';
-import { api, el, message } from '../commun.js';
+import { api, el, message, ouvrirFeuille } from '../commun.js';
 
 const dateLongue = (d) => (d ? new Date(`${d}T12:00:00`).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : null);
 
 export function ouvrirTome(serie, t, apres) {
-  const fermer = () => { voile.remove(); feuille.remove(); };
-  const voile = el('div.voile', { onclick: fermer });
+  let fiche;
+  const fermer = () => fiche.fermer();
   const ligne = (libelle, valeur) => (valeur ? el('div', {}, el('dt', { texte: libelle }), el('dd', { texte: String(valeur) })) : '');
-  const img = t.couverture ? el('img.tome-couv', { src: `/api/couverture/${serie.id}/${t.numero}`, alt: `Couverture du tome ${t.numero}` }) : '';
+  const img = t.couverture ? el('img.tome-couv', { src: `/api/couverture/${serie.id}/${t.numero}?taille=grande`, alt: `Couverture du tome ${t.numero}`, width: '90', height: '135' }) : '';
   if (img) img.addEventListener('error', () => img.remove());
   const date = el('input', { type: 'date', value: t.sortie_le || '', 'aria-label': T.dateSortie });
   const pretInput = el('input', { type: 'text', maxlength: 60, placeholder: T.aQui, 'aria-label': T.aQui });
   const titreInput = el('input', { type: 'text', maxlength: 200, value: t.titre && t.titre !== `${serie.titre} T${t.numero}` ? t.titre : '', placeholder: T.titreTomePlace, 'aria-label': T.titreTome });
-  const feuille = el('div.feuille.tome-fiche', { role: 'dialog', 'aria-label': `${serie.titre}, tome ${t.numero}` },
-    el('div.tome-tete', {}, img, el('div', {},
-      el('p.meta', { texte: serie.titre }),
-      el('h3', { texte: libelleTome(serie.saisons, t.numero, serie.saisons_noms) }),
+  const contenu = [
+    el('div.tome-tete', {}, img, el('div', {}, // série et n° : dans le titre de la feuille
       t.titre && t.titre !== `${serie.titre} T${t.numero}` ? el('p.meta', { texte: t.titre }) : '')),
     el('dl.infos', {},
       ligne(T.possedeLe, t.possede ? dateLongue(t.achete_le) || T.oui : null),
@@ -56,8 +54,7 @@ export function ouvrirTome(serie, t, apres) {
         catch (x) { message(x.message); }
       },
     }, el('span', { texte: T.titreTome }), el('div.recherche', {}, titreInput, el('button.bouton.discret', { texte: T.enregistrer }))),
-    el('button.bouton.discret', { texte: T.deplacer, onclick: () => montrerDeplacer() }),
-    el('button.bouton.discret', { texte: 'Fermer', onclick: fermer }));
+    el('button.bouton.discret', { texte: T.deplacer, onclick: () => montrerDeplacer() })];
 
   // Déplacer ce tome vers une autre série (réparer une fusion), avec tout son état.
   async function montrerDeplacer() {
@@ -70,7 +67,7 @@ export function ouvrirTome(serie, t, apres) {
     const num = el('input', { type: 'number', min: '1', max: '999', value: String(t.numero), required: true, 'aria-label': T.numero });
     const maj = () => { const nouv = !choix.value; titre.hidden = !nouv; type.hidden = !nouv; };
     choix.addEventListener('change', maj); maj();
-    feuille.replaceChildren(
+    fiche.corps.replaceChildren(
       el('h3', { texte: T.deplacerTitre }),
       el('p.meta', { texte: `${serie.titre} · ${libelleTome(serie.saisons, t.numero, serie.saisons_noms)}` }),
       el('p.aide', { texte: T.aideDeplacer }),
@@ -90,12 +87,10 @@ export function ouvrirTome(serie, t, apres) {
         el('label.champ', {}, el('span', { texte: T.numero }), num),
         el('div.recherche', {}, el('button.bouton.or', { type: 'submit', texte: T.deplacer }),
           el('button.bouton.discret', { type: 'button', texte: T.annuler, onclick: fermer }))));
-    feuille.querySelector('select').focus();
+    fiche.corps.querySelector('select').focus();
   }
 
-  document.body.append(voile, feuille);
-  feuille.querySelector('button').focus();
-  feuille.addEventListener('keydown', (e) => e.key === 'Escape' && fermer());
+  fiche = ouvrirFeuille({ titre: `${serie.titre}, ${libelleTome(serie.saisons, t.numero, serie.saisons_noms)}`, classe: 'tome-fiche' }, ...contenu);
 }
 
 // Photo de la couverture : réduite à 600 px de haut (JPEG ~80 Ko) avant l'envoi, pour tenir dans la base gratuite.

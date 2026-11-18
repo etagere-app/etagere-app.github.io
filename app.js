@@ -1,6 +1,6 @@
 // Étagère — navigation (#/…), cadre (en-tête, barre du bas), connexion, menu, bandeau cookies.
 import { T } from './textes.js';
-import { api, el, icone, message, NonConnecte } from './commun.js';
+import { api, el, icone, message, erreur, ouvrirFeuille, NonConnecte, ErreurReseau } from './commun.js';
 import { vueBibliotheque } from './vues/bibliotheque.js';
 import { vueSerie } from './vues/serie.js';
 import { vueAVenir } from './vues/a-venir.js';
@@ -42,17 +42,19 @@ function cadre(contenu) {
   const barre = el('nav.barre', { 'aria-label': 'Navigation' },
     lienBarre('#/', 'livres', T.bibliotheque),
     lienBarre('#/a-venir', 'calendrier', T.aVenir),
-    el('div.scanner-zone', {}, el('button.scanner-bouton', { 'aria-label': T.noterAchat, onclick: () => ouvrirScanner(afficher) }, icone('scan')), el('span', { texte: T.ajouterTome })),
+    el('div.scanner-zone', {}, el('button.scanner-bouton', { 'aria-label': T.scannerTome, onclick: () => ouvrirScanner(afficher) }, icone('scan')), el('span', { 'aria-hidden': 'true', texte: T.scanner })),
     lienBarre('#/ajouter', 'plus', T.ajouter),
     lienBarre('#/bilan', 'lecture', T.bilan));   // le menu est déjà dans l'en-tête : la 5e place de la barre sert à « Ma lecture »
-  const main = el('main', { id: 'contenu', tabindex: '-1' }, contenu);
+  const main = el('main', { id: 'contenu', tabindex: '-1' }, session?.horsLigne ? el('p.hors-ligne', { role: 'status', texte: T.horsLigne }) : '', contenu);
   app.replaceChildren(entete, main, barre);
   bandeau();
 }
 
 async function afficher() {
   try {
-    if (!session) session = await api('session');
+    // (perso) hors ligne : /api/session ne répond pas → on continue avec les données en cache, en lecture seule (18/11)
+    if (!session) session = await api('session').catch((x) => { if (x instanceof ErreurReseau) return { horsLigne: true }; throw x; });
+    if (session.ok === false) throw new NonConnecte();
     const h = location.hash || '#/';
     const [re, vue] = ROUTES.find(([r]) => r.test(h));
     const contenu = await vue(h.match(re));
@@ -61,7 +63,8 @@ async function afficher() {
     if (session.libre) rappelSauvegarde();
   } catch (e) {
     if (e instanceof NonConnecte) return ecranConnexion();
-    cadre(el('p.vide', {}, el('strong', { texte: T.erreurReseau }), e.message));
+    cadre(el('div.vide', { role: 'alert' }, el('strong', { texte: e instanceof ErreurReseau ? T.erreurReseau : e.message || T.erreurReseau }),
+      el('p', {}, el('button.bouton.or', { type: 'button', texte: T.reessayer, onclick: () => { if (session?.horsLigne) session = null; afficher(); } }))));
   }
 }
 
@@ -69,6 +72,7 @@ function ecranConnexion() {
   session = null;
   const err = el('p.erreur', { role: 'alert' });
   const champ = el('input', { type: 'password', id: 'mdp', autocomplete: 'current-password', required: true });
+  const voir = el('label.case', {}, el('input', { type: 'checkbox', onchange: (e) => { champ.type = e.target.checked ? 'text' : 'password'; } }), el('span', { texte: T.afficherMdp }));
   const form = el('form', {
     onsubmit: async (e) => {
       e.preventDefault(); err.textContent = '';
@@ -78,7 +82,7 @@ function ecranConnexion() {
   },
   el('h1', {}, 'Étag', el('span', { texte: 'è' }), 're'),
   el('p.meta', { texte: T.slogan }),
-  el('label.champ', { for: 'mdp' }, el('span', { texte: T.motDePasse }), champ),
+  el('label.champ', { for: 'mdp' }, el('span', { texte: T.motDePasse }), champ), voir,
   err, el('button.bouton.or', { type: 'submit', texte: T.entrer }), piedLegal());
   app.replaceChildren(el('main.connexion', { id: 'contenu' }, form));
   champ.focus();
@@ -89,8 +93,8 @@ export function piedLegal() {
 }
 
 function ouvrirMenu() {
-  const fermer = () => { voile.remove(); feuille.remove(); };
-  const voile = el('div.voile', { onclick: fermer });
+  let menu;
+  const fermer = () => menu.fermer();
   const notif = el('button.bouton.or', {
     onclick: async () => {
       // version libre : pas de serveur pour pousser, l'appli prévient quand elle s'ouvre ou se met à jour
@@ -103,35 +107,42 @@ function ouvrirMenu() {
   const montrer = (a) => { etatAuto.textContent = texteAutomate(a); };
   if (!session?.libre) api('automate').then(montrer).catch(() => {});
   const libre = !!session?.libre;
-  const feuille = el('div.feuille', { role: 'dialog', 'aria-label': T.menu },
+  const demanderAutomate = async () => {
+    try { montrer(await api('automate', { method: 'POST' })); message(T.automateDemande); } catch (x) { erreur(x, demanderAutomate); }
+  };
+  // 18/11 : erreur réseau = message clair + Réessayer (avant : rien ne se passait)
+  const verifier = async () => {
+    message('…');
+    try {
+      if (libre) { await api('libre/synchroniser', { method: 'POST' }); message(T.aJour); afficher(); return; }
+      const r = await api('verifier-sorties', { method: 'POST' }); message(`${r.notifications} nouvelle(s) annonce(s)`); afficher();
+    } catch (x) { erreur(x, verifier); }
+  };
+  const completerTout = async () => {
+    message('Recherche des infos…');
+    try {
+      const r = await completerFiches((p) => message(`${p.restant} tome(s) restant(s)…`));
+      message(r.restant ? `${r.total} complété(s), la suite plus tard (quota Google)` : `${r.total} tome(s) complété(s)`); afficher();
+    } catch (x) { erreur(x, completerTout); }
+  };
+  menu = ouvrirFeuille({ titre: T.menu, classe: 'menu' },
     notif,
     libre ? [boutonSauvegarder('bouton.discret', fermer), boutonRestaurer(() => { fermer(); afficher(); }), boutonAutreAppareil(fermer)] : [
-      el('button.bouton.discret', { texte: T.automate, onclick: async () => {
-        try { montrer(await api('automate', { method: 'POST' })); message(T.automateDemande); } catch (x) { message(x.message); }
-      } }),
+      el('button.bouton.discret', { texte: T.automate, onclick: demanderAutomate }),
       etatAuto],
     el('a.bouton.discret', { href: '#/pile', texte: T.pile, onclick: fermer }),
     el('a.bouton.discret', { href: '#/prets', texte: T.prets, onclick: fermer }),
     el('a.bouton.discret', { href: '#/bilan', texte: T.bilan, onclick: fermer }),
-    el('button.bouton.discret', { texte: T.verifier, onclick: async () => {
-      fermer(); message('…');
-      if (libre) { await api('libre/synchroniser', { method: 'POST' }); message(T.aJour); afficher(); return; }
-      const r = await api('verifier-sorties', { method: 'POST' }); message(`${r.notifications} nouvelle(s) annonce(s)`); afficher();
-    } }),
-    el('button.bouton.discret', { texte: T.completerTout, onclick: async () => {
-      fermer(); message('Recherche des infos…');
-      try {
-        const r = await completerFiches((p) => message(`${p.restant} tome(s) restant(s)…`));
-        message(r.restant ? `${r.total} complété(s), la suite plus tard (quota Google)` : `${r.total} tome(s) complété(s)`); afficher();
-      } catch (x) { message(x.message); }
-    } }),
+    el('button.bouton.discret', { texte: T.verifier, onclick: () => { fermer(); verifier(); } }),
+    el('button.bouton.discret', { texte: T.completerTout, onclick: () => { fermer(); completerTout(); } }),
     libre ? '' : el('a.bouton.discret', { href: '/api/export', download: 'etagere.json', texte: T.exporter }),
     el('a.bouton.discret', { href: '/aide.html', texte: T.aide }),
-    libre ? '' : el('button.bouton.danger', { texte: T.deconnexion, onclick: async () => { await api('deconnexion', { method: 'POST' }); fermer(); ecranConnexion(); } }),
+    libre ? '' : el('button.bouton.danger', { texte: T.deconnexion, onclick: async () => {
+      try { await api('deconnexion', { method: 'POST' }); } catch (x) { return erreur(x); }
+      await window.caches?.delete('etagere-donnees').catch(() => {}); // (perso) plus aucune donnée lisible sur l'appareil après la déconnexion
+      fermer(); ecranConnexion();
+    } }),
     piedLegal());
-  document.body.append(voile, feuille);
-  feuille.querySelector('button').focus();
-  feuille.addEventListener('keydown', (e) => e.key === 'Escape' && fermer());
 }
 
 // « Dernier passage : 4 nov. à 01:59 · 2 date(s), 10 couverture(s) »
@@ -172,6 +183,12 @@ async function demarrerLibre() {
 }
 
 window.addEventListener('hashchange', afficher);
+// 18/11 : toute erreur oubliée par un bouton devient un message français (jamais « Failed to fetch »)
+window.addEventListener('unhandledrejection', (e) => {
+  if (e.reason instanceof NonConnecte) { e.preventDefault(); ecranConnexion(); return; }
+  if (e.reason instanceof ErreurReseau || e.reason?.message) { e.preventDefault(); erreur(e.reason); }
+});
+window.addEventListener('online', () => { if (session?.horsLigne) { session = null; afficher(); } });
 if (LIBRE) demarrerLibre().then((ok) => ok && afficher());
 else {
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});

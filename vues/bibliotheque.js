@@ -1,6 +1,6 @@
 // Bibliothèque : une étagère par type (04/11 : mangas, BD, livres… chacun la sienne), recherche, filtre par type.
 import { T } from '../textes.js';
-import { api, el, teinte, couverture, dateCourte } from '../commun.js';
+import { api, el, teinte, couverture, dateCourte, sansAccents } from '../commun.js';
 
 let filtre = 'tout';
 let texte = '';
@@ -25,8 +25,8 @@ export async function vueBibliotheque() {
   const vide = el('div.vide');
   const ordre = Object.keys(T.types);
   const dessiner = () => {
-    const t = texte.trim().toLowerCase();
-    const liste = (filtre === 'envie' ? envies : series).filter((s) => (filtre === 'tout' || filtre === 'envie' || s.type === filtre) && (!categorie || categoriesDe(s).includes(categorie)) && (!t || s.titre.toLowerCase().includes(t)));
+    const t = sansAccents(texte.trim()); // 18/11 : sans accents, sur le titre, les autres titres et l'auteur
+    const liste = (filtre === 'envie' ? envies : series).filter((s) => (filtre === 'tout' || filtre === 'envie' || s.type === filtre) && (!categorie || categoriesDe(s).includes(categorie)) && (!t || sansAccents(`${s.titre} ${s.alias || ''} ${s.auteur || ''}`).includes(t)));
     // une étagère par type, dans l'ordre des types ; « À acheter » reste une seule étagère
     const groupes = filtre === 'envie' ? [['envie', liste]] : ordre.map((ty) => [ty, liste.filter((s) => s.type === ty)]).filter(([, l]) => l.length);
     mur.replaceChildren(...groupes.map(([ty, l]) => el('section.etagere', { 'aria-label': ty === 'envie' ? T.aAcheter : T.etageres[ty] || ty },

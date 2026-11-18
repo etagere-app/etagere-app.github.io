@@ -14,12 +14,12 @@ export async function vueBilan() {
     return zone;
   }
   zone.append(
-    el('div.stats', {},
+    el('div.tuiles', {},
       tuile(b.tomes, T.tTomes), tuile(b.series, T.tSeries), tuile(b.lus, T.tLus),
       tuile(b.non_lus, T.tNonLus), tuile(b.pretes, T.tPretes), tuile(b.a_acheter, T.tAAcheter)),
     (b.achetes_annee || b.lus_annee) ? el('div', {},
       el('h3.sous-titre', { texte: T.cetteAnnee(b.annee) }),
-      el('div.stats', {}, tuile(b.achetes_annee, T.achetesAnnee), tuile(b.lus_annee, T.lusAnnee))) : '',
+      el('div.tuiles', {}, tuile(b.achetes_annee, T.achetesAnnee), tuile(b.lus_annee, T.lusAnnee))) : '',
     b.parType && b.parType.length ? el('div', {},
       el('h3.sous-titre', { texte: T.repartition }),
       el('div.repartition', {}, ...b.parType.map((x) => el('div.rep', {}, el('b', { texte: String(x.n) }), el('span', { texte: TYPES[x.type] || x.type || '—' }))))) : '',

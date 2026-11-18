@@ -1,7 +1,7 @@
 // Fiche d'une série : tous les n° en grille (possédé / manquant / à paraître).
 // Un toucher coche ou décoche, ou ouvre la fiche du tome (choix mémorisé sur l'appareil).
 import { T } from '../textes.js';
-import { api, el, icone, teinte, couverture, message, dateCourte } from '../commun.js';
+import { api, el, icone, teinte, couverture, message, erreur, dateCourte } from '../commun.js';
 import { ouvrirTome, photographierCouverture } from './tome.js';
 import { lireSaisons, versLocal, aDesSaisons, libelleTome, nomSaison } from '../saisons.js';
 
@@ -24,7 +24,19 @@ export async function completerFiches(surProgres) {
   return { total, restant: null };
 }
 
+// 18/11 : la grille change tout de suite ; si l'enregistrement échoue (réseau coupé), le tome revient comme avant + Réessayer.
+function changerTome(serie, maj) {
+  const changer = async (t, n, champ) => {
+    const avant = t[champ];
+    t[champ] = avant ? 0 : 1; maj(n);
+    try { await api(`series/${serie.id}/tomes/${n}`, { method: 'PUT', corps: { [champ]: !!t[champ] } }); }
+    catch (x) { t[champ] = avant; maj(n); erreur(x, () => changer(t, n, champ)); }
+  };
+  return changer;
+}
+
 function grille(serie, maj, rafraichir) {
+  const changer = changerTome(serie, maj);
   const parus = Math.max(serie.nb_parus, ...serie.tomes.map((t) => t.numero), 0);
   const parNum = new Map(serie.tomes.map((t) => [t.numero, t]));
   const saisons = aDesSaisons(serie.saisons) ? lireSaisons(serie.saisons) : null;
@@ -38,18 +50,11 @@ function grille(serie, maj, rafraichir) {
       'aria-pressed': String(!!t.possede),
       title: titreTome || undefined,
       'aria-label': `${libelleTome(serie.saisons, n, serie.saisons_noms)}${titreTome ? ` · ${titreTome}` : ''} : ${t.possede ? `${T.lPossede}${nonLu ? `, ${T.lNonLu.toLowerCase()}` : ''}` : avenir ? `${T.lAvenir} le ${dateCourte(t.sortie_le)}` : T.lManque}`,
-      onclick: async () => {
+      onclick: () => {
         if (lireMode() === 'fiche') return ouvrirTome(serie, t, rafraichir);
-        if (lireMode() === 'lire') {
-          if (!t.possede) return message(T.cocherDabord);
-          await api(`series/${serie.id}/tomes/${n}`, { method: 'PUT', corps: { lu: !t.lu } });
-          t.lu = t.lu ? 0 : 1; return maj(n);
-        }
-        const possede = !t.possede;
-        await api(`series/${serie.id}/tomes/${n}`, { method: 'PUT', corps: { possede } });
-        t.possede = possede ? 1 : 0;
+        if (lireMode() === 'lire' && !t.possede) return message(T.cocherDabord);
         if (!parNum.has(n)) serie.tomes.push(t);
-        maj(n);
+        changer(t, n, lireMode() === 'lire' ? 'lu' : 'possede');
       },
     }, t.couverture ? el('img', { src: `/api/couverture/${serie.id}/${n}`, alt: '', loading: 'lazy', decoding: 'async' }) : '',
     el('span.n', { texte: String(local.numero) }), avenir ? el('small', { texte: dateCourte(t.sortie_le) }) : '');
@@ -204,20 +209,22 @@ export async function vueSerie(id) {
     el('button.bouton.discret', { texte: T.photoCouverture, onclick: () => photographierCouverture(serie, rafraichir) }),
     el('button.bouton.discret', { texte: T.completerFiche, onclick: async (e) => {
       e.currentTarget.disabled = true; message('Recherche des infos…');
-      try { const r = await completerFiches(); message(`${r.total} tome(s) complété(s)`); rafraichir(); } catch (x) { message(x.message); e.currentTarget.disabled = false; }
+      const b = e.currentTarget;
+      try { const r = await completerFiches(); message(`${r.total} tome(s) complété(s)`); rafraichir(); } catch (x) { erreur(x); b.disabled = false; }
     } }),
     el('button.bouton.discret', { texte: T.rangerSaison, onclick: (e) => e.currentTarget.closest('.actions').after(formRanger(serie)) }),
     aDesSaisons(serie.saisons) ? el('button.bouton.discret', { texte: T.organiserSaisons, onclick: (e) => e.currentTarget.closest('.actions').after(formSaisons(serie, rafraichir)) }) : '');
   const modes = el('div.onglets.modes', { role: 'group', 'aria-label': T.toucherUnNumero },
     ...[['cocher', T.modeCocher], ['lire', T.modeLire], ['fiche', T.modeFiche]].map(([m, t]) => el('button', {
-      type: 'button', 'aria-pressed': String(lireMode() === m), 'aria-selected': String(lireMode() === m), texte: t,
-      onclick: (e) => { ecrireMode(m); modes.querySelectorAll('button').forEach((b) => { const v = String(b === e.currentTarget); b.setAttribute('aria-pressed', v); b.setAttribute('aria-selected', v); }); },
+      type: 'button', 'aria-pressed': String(lireMode() === m), texte: t,
+      onclick: (e) => { ecrireMode(m); modes.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b === e.currentTarget))); },
     })));
-  const resume = serie.resume ? el('details.resume', { open: true }, el('summary', { texte: T.resume }), el('p', { texte: serie.resume })) : '';
+  // 18/11 : synopsis fermé au téléphone, pour voir la 1re rangée de tomes sans défiler
+  const resume = serie.resume ? el('details.resume', { open: matchMedia('(min-width: 760px)').matches }, el('summary', { texte: T.resume }), el('p', { texte: serie.resume })) : '';
   const sansJaquette = serie.tomes.filter((t) => t.possede && !t.couverture).length; // 04/11 : l'automate les cherche, au plus tard le dimanche
   const attente = sansJaquette ? el('p.aide.jaquettes-attente', { texte: T.jaquettesDimanche(sansJaquette) }) : '';
-  zone.append(el('a.retour', { href: '#/' }, icone('retour'), T.bibliotheque), fiche, resume, modes, legende, attente,
+  zone.append(el('a.retour', { href: '#/' }, icone('retour'), T.bibliotheque), fiche, modes, legende,
     serie.nb_parus || serie.tomes.length ? grilleEl : el('p.aide', { texte: 'Indique le nombre de tomes parus (Modifier la série) pour voir la grille.' }),
-    serie.note ? el('p.meta', { texte: serie.note }) : '', actions);
+    attente, resume, serie.note ? el('p.meta', { texte: serie.note }) : '', actions);
   return zone;
 }

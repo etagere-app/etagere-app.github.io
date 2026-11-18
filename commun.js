@@ -2,15 +2,19 @@
 import { T } from './textes.js';
 
 export class NonConnecte extends Error {}
+export class ErreurReseau extends Error {} // réseau coupé : jamais le « Failed to fetch » du navigateur à l'écran (18/11)
 
 export async function api(chemin, { method = 'GET', corps } = {}) {
-  const r = await fetch(`/api/${chemin}`, {
-    method, credentials: 'same-origin',
-    headers: corps ? { 'Content-Type': 'application/json' } : {},
-    body: corps ? JSON.stringify(corps) : undefined,
-  });
+  let r;
+  try {
+    r = await fetch(`/api/${chemin}`, {
+      method, credentials: 'same-origin',
+      headers: corps ? { 'Content-Type': 'application/json' } : {},
+      body: corps ? JSON.stringify(corps) : undefined,
+    });
+  } catch { throw new ErreurReseau(T.erreurReseau); }
   if (r.status === 401 && chemin !== 'connexion') throw new NonConnecte();
-  const j = await r.json().catch(() => ({}));
+  const j = await r.json().catch(() => ({})); // page d'erreur HTML (serveur coupé derrière Caddy) : message français
   if (!r.ok) throw new Error(j.erreur || T.erreurReseau);
   return j;
 }
@@ -38,13 +42,45 @@ export function teinte(noeud, titre) {
   return noeud;
 }
 
+// Recherche (18/11) : « echo » trouve « Écho », « oeil » trouve « Œil »
+export const sansAccents = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/œ/gi, 'oe').replace(/æ/gi, 'ae').toLowerCase();
+
 let minuteur;
-export function message(texte) {
+// action : { texte: 'Réessayer', faire } → bouton dans le message, qui reste alors 7 s au lieu de 2,6 s.
+export function message(texte, action) {
   document.querySelector('.message')?.remove();
-  const m = el('div.message', { role: 'status', texte });
+  const m = el('div.message', { role: 'status' }, el('span', { texte }),
+    action ? el('button', { type: 'button', texte: action.texte, onclick: () => { m.remove(); action.faire(); } }) : '');
   document.body.append(m);
   clearTimeout(minuteur);
-  minuteur = setTimeout(() => m.remove(), 2600);
+  minuteur = setTimeout(() => m.remove(), action ? 7000 : 2600);
+}
+export const erreur = (x, refaire) => message(x?.message || T.erreurReseau, refaire && { texte: T.reessayer, faire: refaire });
+
+// Feuille du bas modale (menu, fiche d'un tome) : titre + bouton Fermer, aria-modal, focus gardé dedans puis rendu, Échap.
+export function ouvrirFeuille({ titre, classe = '' }, ...enfants) {
+  const avant = document.activeElement;
+  const app = document.getElementById('app');
+  const corps = el('div.feuille-corps', {}, ...enfants);
+  const idTitre = `feuille-${Date.now()}`;
+  const feuille = el(`div.feuille${classe ? `.${classe}` : ''}`, { role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': idTitre },
+    el('div.feuille-tete', {}, el('h2', { id: idTitre, texte: titre }),
+      el('button.bouton.discret.fermer', { type: 'button', 'aria-label': T.fermer, onclick: () => fermer() }, icone('fermer'))),
+    corps);
+  const voile = el('div.voile', { onclick: () => fermer() });
+  const fermer = () => { voile.remove(); feuille.remove(); app.inert = false; document.removeEventListener('keydown', touches); avant?.focus?.(); };
+  const touches = (e) => {
+    if (e.key === 'Escape') { e.preventDefault(); fermer(); return; }
+    if (e.key !== 'Tab') return;
+    const l = [...feuille.querySelectorAll('a[href], button:not([disabled]), input, select, textarea, summary')].filter((x) => x.getClientRects().length);
+    if (!l.length) return;
+    if (!feuille.contains(document.activeElement)) { e.preventDefault(); l[0].focus(); } else if (e.shiftKey && document.activeElement === l[0]) { e.preventDefault(); l.at(-1).focus(); } else if (!e.shiftKey && document.activeElement === l.at(-1)) { e.preventDefault(); l[0].focus(); }
+  };
+  document.addEventListener('keydown', touches);
+  app.inert = true; // rien derrière ne prend le focus ni les touchers
+  document.body.append(voile, feuille);
+  (corps.querySelector('button, a[href], input, select') || feuille.querySelector('.fermer')).focus();
+  return { feuille, corps, fermer };
 }
 
 const CHEMINS = {

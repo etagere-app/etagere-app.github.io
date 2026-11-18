@@ -30,7 +30,12 @@ export async function vuePile() {
           el('button.bouton.discret', { texte: T.toutLu, onclick: async () => {
             await api(`series/${s.serie_id}/tout-lu`, { method: 'POST' });
             for (const t of tomes) pile.splice(pile.indexOf(t), 1);
-            message(T.lu(s.titre)); dessiner();
+            dessiner();
+            // 18/11 : « Tout lu » d'un toucher : « Annuler » remet ces tomes sur la pile
+            message(T.lu(s.titre), { texte: T.annuler, faire: async () => {
+              for (const t of tomes) await api(`series/${t.serie_id}/tomes/${t.numero}`, { method: 'PUT', corps: { lu: false } });
+              pile.push(...tomes); pile.sort((a, b) => (a.achete_le || '9').localeCompare(b.achete_le || '9')); dessiner();
+            } });
           } })),
         ul);
     }) : [el('div.vide', {}, el('strong', { texte: T.pileVide[0] }), T.pileVide[1])]));
