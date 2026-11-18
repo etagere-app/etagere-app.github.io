@@ -21,7 +21,7 @@ export async function vuePile() {
           await api(`series/${t.serie_id}/tomes/${t.numero}`, { method: 'PUT', corps: { lu: true } });
           pile.splice(pile.indexOf(t), 1); message(T.lu(`${s.titre} ${n.saison ? `S${n.saison} ` : ''}n°${n.numero}`)); dessiner();
         } }, t.couverture ? el('img', { src: `/api/couverture/${t.serie_id}/${t.numero}`, alt: '', loading: 'lazy', decoding: 'async' }) : '',
-        el('span.n', { texte: String(n.numero) }));
+        el('span.n', { texte: String(n.numero) }), el('small.etat', { 'aria-hidden': 'true', texte: T.etatPasLu }));
         if (t.couverture) { b.classList.add('illustre'); b.querySelector('img').addEventListener('error', (e) => { e.target.remove(); b.classList.remove('illustre'); }); }
         ul.append(el('li', {}, b));
       }

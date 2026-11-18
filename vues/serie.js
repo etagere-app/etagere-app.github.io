@@ -1,7 +1,7 @@
 // Fiche d'une série : tous les n° en grille (possédé / manquant / à paraître).
 // Un toucher coche ou décoche, ou ouvre la fiche du tome (choix mémorisé sur l'appareil).
 import { T } from '../textes.js';
-import { api, el, icone, teinte, couverture, message, erreur, dateCourte } from '../commun.js';
+import { api, el, icone, teinte, couverture, objetLivre, message, erreur, dateCourte } from '../commun.js';
 import { ouvrirTome, photographierCouverture } from './tome.js';
 import { lireSaisons, versLocal, aDesSaisons, libelleTome, nomSaison } from '../saisons.js';
 
@@ -57,7 +57,9 @@ function grille(serie, maj, rafraichir) {
         changer(t, n, lireMode() === 'lire' ? 'lu' : 'possede');
       },
     }, t.couverture ? el('img', { src: `/api/couverture/${serie.id}/${n}`, alt: '', loading: 'lazy', decoding: 'async' }) : '',
-    el('span.n', { texte: String(local.numero) }), avenir ? el('small', { texte: dateCourte(t.sortie_le) }) : '');
+    el('span.n', { texte: String(local.numero) }), avenir ? el('small', { texte: dateCourte(t.sortie_le) }) : '',
+    // 18/11 : l'état écrit sur le tome (lisible sans la couleur) ; le nom complet reste dans aria-label
+    nonLu ? el('small.etat', { 'aria-hidden': 'true', texte: T.etatPasLu }) : !t.possede && !avenir ? el('small.etat', { 'aria-hidden': 'true', texte: T.etatManque }) : '');
     if (t.couverture) { b.classList.add('illustre'); b.querySelector('img').addEventListener('error', (e) => { e.target.remove(); b.classList.remove('illustre'); }); }
     return el('li', {}, b);
   };
@@ -105,15 +107,20 @@ function formulaire(serie, rafraichir) {
     el('label.case', {}, el('input', { type: 'checkbox', name: 'envie', value: '1', checked: !!serie.envie }), el('span', { texte: T.envieCase })),
     el('div.actions', {}, el('button.bouton', { type: 'submit', texte: T.enregistrer }), el('button.bouton.discret', { type: 'button', texte: T.annuler, onclick: () => f.remove() })),
   );
+  return f;
+}
+
+// 18/11 : « Supprimer la série » à part, au bout de la rangée des actions (2e toucher pour confirmer)
+function boutonSupprimer(serie) {
   let confirme = false;
-  f.append(el('div.actions', {}, el('button.bouton.danger', {
+  return el('button.bouton.danger', {
     type: 'button', texte: T.supprimer,
     onclick: async (e) => {
       if (!confirme) { confirme = true; e.currentTarget.textContent = T.confirmerSuppression; return; }
-      await api(`series/${serie.id}`, { method: 'DELETE' }); location.hash = '#/';
+      const b = e.currentTarget;
+      try { await api(`series/${serie.id}`, { method: 'DELETE' }); location.hash = '#/'; } catch (x) { erreur(x); b.disabled = false; }
     },
-  })));
-  return f;
+  });
 }
 
 // Ranger cette série (un arc : « Sword Art Online - Aincrad ») comme SAISON NOMMÉE d'une série parente.
@@ -195,7 +202,8 @@ export async function vueSerie(id) {
   };
   grilleEl = grille(serie, maj, rafraichir);
   dessinerStats();
-  const fiche = teinte(el('div.fiche', {}, couverture(serie), el('div', {},
+  const parusFiche = Math.max(serie.nb_parus, serie.tomes.filter((t) => t.possede).length);
+  const fiche = teinte(el('div.fiche', {}, objetLivre(couverture(serie), parusFiche ? serie.tomes.filter((t) => t.possede).length / parusFiche : 0), el('div', {},
     serie.envie ? el('span.ruban.dans-fiche', { texte: T.aAcheter }) : '',
     el('h2', { id: 't-serie', texte: serie.titre }),
     el('p.meta', { texte: [T.types[serie.type], serie.editeur, T.statuts[serie.statut]].filter(Boolean).join(' · ') }),
@@ -205,7 +213,7 @@ export async function vueSerie(id) {
   const legende = el('p.legende', {}, el('span.l-possede', { texte: T.lPossede }), el('span.l-non-lu', { texte: T.lNonLu }), el('span.l-manque', { texte: T.lManque }), el('span.l-avenir', { texte: T.lAvenir }));
   teinte(legende, serie.titre);
   const actions = el('div.actions', {},
-    el('button.bouton.discret', { texte: T.modifier, onclick: (e) => e.currentTarget.parentNode.after(formulaire(serie, rafraichir)) }),
+    el('button.bouton.principal', { texte: T.modifier, onclick: (e) => e.currentTarget.parentNode.after(formulaire(serie, rafraichir)) }), // le seul bouton principal
     el('button.bouton.discret', { texte: T.photoCouverture, onclick: () => photographierCouverture(serie, rafraichir) }),
     el('button.bouton.discret', { texte: T.completerFiche, onclick: async (e) => {
       e.currentTarget.disabled = true; message('Recherche des infos…');
@@ -213,7 +221,8 @@ export async function vueSerie(id) {
       try { const r = await completerFiches(); message(`${r.total} tome(s) complété(s)`); rafraichir(); } catch (x) { erreur(x); b.disabled = false; }
     } }),
     el('button.bouton.discret', { texte: T.rangerSaison, onclick: (e) => e.currentTarget.closest('.actions').after(formRanger(serie)) }),
-    aDesSaisons(serie.saisons) ? el('button.bouton.discret', { texte: T.organiserSaisons, onclick: (e) => e.currentTarget.closest('.actions').after(formSaisons(serie, rafraichir)) }) : '');
+    aDesSaisons(serie.saisons) ? el('button.bouton.discret', { texte: T.organiserSaisons, onclick: (e) => e.currentTarget.closest('.actions').after(formSaisons(serie, rafraichir)) }) : '',
+    boutonSupprimer(serie));
   const modes = el('div.onglets.modes', { role: 'group', 'aria-label': T.toucherUnNumero },
     ...[['cocher', T.modeCocher], ['lire', T.modeLire], ['fiche', T.modeFiche]].map(([m, t]) => el('button', {
       type: 'button', 'aria-pressed': String(lireMode() === m), texte: t,

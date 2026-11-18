@@ -1,6 +1,6 @@
 // Bibliothèque : une étagère par type (04/11 : mangas, BD, livres… chacun la sienne), recherche, filtre par type.
 import { T } from '../textes.js';
-import { api, el, teinte, couverture, dateCourte, sansAccents } from '../commun.js';
+import { api, el, teinte, couverture, objetLivre, dateCourte, sansAccents } from '../commun.js';
 
 let filtre = 'tout';
 let texte = '';
@@ -13,7 +13,9 @@ function carte(s) {
   if (s.envie) c.append(el('span.ruban', { texte: T.aAcheter }));
   c.append(el('div.compteur', {}, s.envie ? el('span', { texte: T.tomesParus(parus) }) : el('span', {}, el('b', { texte: String(s.nb_possedes) }), ` / ${parus}`),
     s.prochaine_sortie ? el('span.pastille-sortie', { texte: `▸ ${dateCourte(s.prochaine_sortie)}` }) : ''));
-  const a = el('a.livre', { href: `#/serie/${s.id}`, 'aria-label': s.envie ? `${s.titre}, à acheter, ${T.tomesParus(parus)}` : `${s.titre}, ${s.nb_possedes} tomes sur ${parus}` }, c, el('p.nom', { texte: s.titre }));
+  // 18/11 (« Reliure ») : le tome en volume, puis une planche de bois sous chaque rangée
+  const a = el('a.livre', { href: `#/serie/${s.id}`, 'aria-label': s.envie ? `${s.titre}, à acheter, ${T.tomesParus(parus)}` : `${s.titre}, ${s.nb_possedes} tomes sur ${parus}` },
+    objetLivre(c, s.envie || !parus ? 0 : s.nb_possedes / parus), el('span.planche', { 'aria-hidden': 'true' }), el('p.nom', { texte: s.titre }));
   return el('li', {}, teinte(a, s.titre));
 }
 
@@ -64,7 +66,8 @@ export async function vueBibliotheque() {
   const nonLus = series.reduce((n, s) => n + (s.nb_non_lus || 0), 0);
   return el('section', { 'aria-labelledby': 't-biblio' },
     el('h2.sr', { id: 't-biblio', texte: T.bibliotheque }),
-    series.length ? el('p.meta', {}, `${series.length} séries · ${possedes} tomes`,
-      ' · ', el('a.lien-pile', { href: '#/pile', texte: nonLus ? `${T.pile} : ${T.nonLus(nonLus)}` : `${T.pile} : vide` })) : '', // toujours visible (04/11)
+    // 18/11 : chiffres en serif, lisibles d'un coup d'œil
+    series.length ? el('p.meta.chiffres', {}, el('b', { texte: String(series.length) }), ' séries · ', el('b', { texte: String(possedes) }), ' tomes',
+      ' · ', el('a.lien-pile', { href: '#/pile' }, `${T.pile} : `, ...(nonLus ? [el('b', { texte: String(nonLus) }), T.nonLus(nonLus).slice(String(nonLus).length)] : ['vide']))) : '', // toujours visible (04/11)
     toutes.length > 3 ? recherche : '', types.length > 2 || envies.length ? puces : '', choixCat, mur, vide);
 }

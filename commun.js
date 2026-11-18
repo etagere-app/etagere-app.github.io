@@ -106,7 +106,8 @@ export const dateCourte = (d) => new Date(`${d}T12:00:00`).toLocaleDateString('f
 
 // Couverture d'une série : l'image servie par le Worker, sinon une couverture dessinée (titre en serif).
 export function couverture(serie) {
-  const c = el('div.couv', {}, el('span.type', { texte: T.types[serie.type] || serie.type }));
+  // 18/11 (« Reliure ») : dos à nerfs à gauche, qui porte le type écrit à la verticale
+  const c = el('div.couv', {}, el('span.dos', { 'aria-hidden': 'true' }), el('span.type', { texte: T.types[serie.type] || serie.type }));
   teinte(c, serie.titre);
   const image = serie.photo_le || serie.couverture || serie.couverture_tome || serie.tomes?.find((t) => t.couverture)?.couverture;
   if (image) {
@@ -116,4 +117,14 @@ export function couverture(serie) {
     c.prepend(img);
   } else c.prepend(el('div.titre-couv', { texte: serie.titre }));
   return c;
+}
+
+// Le tome en volume (18/11) : la couverture + la tranche des pages (CSS), et un liseré d'avancement (part de 0 à 1).
+export function objetLivre(c, part = 0) {
+  if (part > 0) {
+    const a = el('span.avancement', { 'aria-hidden': 'true' });
+    a.style.setProperty('--p', String(Math.min(1, part))); // CSSOM : permis par la CSP (pas d'attribut style)
+    c.append(a);
+  }
+  return el('div.objet', {}, c);
 }

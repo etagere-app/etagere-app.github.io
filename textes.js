@@ -23,6 +23,7 @@ export const T = {
   videAVenir: ['Rien d’annoncé pour l’instant', 'Les dates arrivent dès qu’un éditeur annonce le prochain tome.'],
   possedes: 'possédés', parus: 'parus', manquants: 'manquants',
   lPossede: 'Possédé', lManque: 'Manquant', lAvenir: 'À paraître',
+  etatPasLu: 'pas lu', etatManque: 'manque', // 18/11 : mot écrit sur le tome, lisible sans la couleur
   prochain: 'Prochain',
   aConfirmer: 'date à confirmer',
   modifier: 'Modifier la série', supprimer: 'Supprimer la série', enregistrer: 'Enregistrer', annuler: 'Annuler',
